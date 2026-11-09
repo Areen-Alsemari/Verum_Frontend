@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react'
 import { resolveApi, type AgentInfo, type ApiClient, type Scenario } from './api'
 import { Header } from './components/Header'
 import { ScenarioPicker } from './components/ScenarioPicker'
+import { AgentBoard } from './components/AgentBoard'
+import { AgentDrawer } from './components/AgentDrawer'
 import { ControlPanel } from './components/ControlPanel'
 import { defaultControls, useRunController } from './state/useRunController'
 import type { ControlValue, ControlValues } from './api'
@@ -34,6 +36,8 @@ export default function App() {
   }, [])
 
   const [controlValues, setControlValues] = useState<Record<string, ControlValues>>({})
+  const [drawerRole, setDrawerRole] = useState<string | null>(null)
+  const agentsByKey = Object.fromEntries(agents.map((a) => [a.role_key, a]))
   const ctl = useRunController(client, agents, scenarios)
   const run = ctl.state
   const running = run.status === 'running'
@@ -60,8 +64,13 @@ export default function App() {
             onNext={ctl.next} onRunAll={() => void ctl.runEvery()} onStop={ctl.stop}
           />
         </aside>
-        <main className="main" />
+        <main className="main">
+          <AgentBoard agents={agents} run={run} selected={drawerRole} onSelect={(r) => setDrawerRole((cur) => (cur === r ? null : r))} />
+        </main>
       </div>
+      {drawerRole && agentsByKey[drawerRole] && (
+        <AgentDrawer info={agentsByKey[drawerRole]!} st={run.agents[drawerRole]} lastTs={run.lastTs} agentsByKey={agentsByKey} onClose={() => setDrawerRole(null)} />
+      )}
       <footer className="honesty-bar" role="note">
         <strong>Advisory only.</strong> A human decides. No automatic action is authorised.
       </footer>

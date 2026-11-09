@@ -57,3 +57,56 @@
 .btn-danger { color: var(--red); border-color: rgba(244,100,92,0.5); }
 .btn-ghost { background: transparent; }
 .btn-block { width: 100%; }
+
+/* ---------- agent board ---------- */
+.board-wrap { position: relative; }
+.board-edges { position: absolute; inset: 0; pointer-events: none; overflow: visible; }
+.edge { fill: none; stroke: var(--line-strong); stroke-width: 1.4; stroke-dasharray: 4 4; color: var(--line-strong); }
+.edge.is-live { stroke: var(--amber); stroke-dasharray: none; opacity: 0.85; }
+.edge.is-flow { stroke-dasharray: 6 5; animation: dash 1s linear infinite; }
+@keyframes dash { to { stroke-dashoffset: -22; } }
+.board-grid { list-style: none; margin: 0; padding: 0; display: grid; column-gap: clamp(36px, 4.2vw, 80px); position: relative; }
+.board-col { display: flex; flex-direction: column; justify-content: center; }
+.board-col-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 12px; justify-content: center; height: 100%; }
+.agent-card { position: relative; width: 100%; text-align: left; display: flex; flex-direction: column; gap: 7px; padding: 12px; border-radius: var(--radius); background: var(--bg-1); border: 1px solid var(--st); color: var(--cream); transition: box-shadow .2s, background .2s; }
+.agent-card:hover { background: var(--bg-3); }
+.agent-card.st-idle { border-color: var(--line); color: var(--muted); }
+.agent-card.st-running { box-shadow: 0 0 0 1px var(--st), 0 0 26px -4px var(--amber-glow); animation: glow 1.8s ease-in-out infinite; }
+.agent-card.st-rejected { border-style: dashed; border-width: 2px; }
+.agent-card.st-error { border-width: 2px; }
+.agent-card.is-selected { background: var(--bg-3); outline: 1px solid var(--champagne); outline-offset: 2px; }
+@keyframes glow { 0%,100% { box-shadow: 0 0 0 1px var(--st), 0 0 10px -4px var(--amber-glow); } 50% { box-shadow: 0 0 0 1px var(--st), 0 0 28px -2px var(--amber-glow); } }
+.agent-head { display: flex; align-items: center; gap: 8px; }
+.agent-ico { color: var(--champagne); display: inline-flex; flex: none; }
+.agent-name { font-weight: 600; font-size: 13px; line-height: 1.25; }
+.agent-order { color: var(--amber-hi); font-family: var(--font-mono); margin-right: 2px; }
+.agent-state { display: inline-flex; align-items: center; gap: 7px; font-size: 12.5px; color: var(--st); font-weight: 600; }
+.state-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--st); flex: none; }
+.st-running .state-dot { animation: pulse 1.4s ease-in-out infinite; }
+.agent-facts { display: flex; gap: 14px; margin: 0; font-size: 12px; }
+.agent-facts div { display: flex; gap: 5px; }
+.agent-facts dt { color: var(--muted); }
+.agent-facts dd { margin: 0; font-family: var(--font-mono); color: var(--cream); }
+.issue-code { font-family: var(--font-mono); font-size: 11.5px; color: var(--yellow); word-break: break-all; }
+.issue-code.is-fail { color: var(--red); font-weight: 600; }
+.agent-consumed { font-size: 11.5px; color: var(--muted); font-family: var(--font-mono); }
+.agent-null { font-size: 11.5px; color: var(--red); font-family: var(--font-mono); }
+
+/* ---------- drawer ---------- */
+.drawer { position: fixed; top: 0; right: 0; bottom: 44px; width: min(420px, 100vw); z-index: 40; background: var(--bg-2); border-left: 1px solid var(--line-strong); padding: 18px; overflow: auto; box-shadow: -20px 0 50px rgba(0,0,0,0.5); display: flex; flex-direction: column; gap: 10px; }
+.drawer-head { display: flex; align-items: center; gap: 12px; }
+.drawer-title { font-size: 16px; font-weight: 600; }
+.drawer-close { margin-left: auto; }
+.drawer-list { display: grid; grid-template-columns: auto 1fr; gap: 6px 14px; margin: 0; font-size: 13.5px; }
+.drawer-list dt { color: var(--muted); }
+.drawer-list dd { margin: 0; }
+.drawer h4.label { margin-top: 8px; color: var(--amber-hi); }
+.drawer-text { font-size: 14px; }
+.null-report { color: var(--red); font-weight: 600; border: 1px solid var(--red); border-radius: var(--radius-sm); padding: 8px 10px; }
+.issue { border: 1px solid var(--line-strong); border-radius: var(--radius-sm); padding: 8px 10px; font-size: 13px; display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: baseline; }
+.issue.is-fail { border-color: var(--red); background: rgba(244,100,92,0.08); }
+.issue.is-fail .issue-code { color: var(--red); font-weight: 600; }
+.issue p { flex-basis: 100%; color: var(--muted); }
+.issue-sev { font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { font-family: var(--font-mono); font-size: 12px; padding: 2px 8px; border: 1px solid var(--line-strong); border-radius: 999px; color: var(--champagne); }

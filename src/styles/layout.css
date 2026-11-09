@@ -20,7 +20,7 @@
   max-width: 1840px; width: 100%; margin: 0 auto; padding: 20px 28px 28px;
   display: grid; grid-template-columns: 380px minmax(0, 1fr); gap: 20px; align-items: start;
 }
-.sidebar { display: flex; flex-direction: column; gap: 16px; position: sticky; top: 12px; max-height: calc(100vh - 70px); overflow: auto; }
+.sidebar { display: flex; flex-direction: column; gap: 16px; }
 .main { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
 .lower { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 20px; align-items: start; }
 
