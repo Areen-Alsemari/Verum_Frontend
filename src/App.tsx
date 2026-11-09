@@ -54,7 +54,7 @@ export default function App() {
       <Header demoReason={demoReason} status={run.status} />
       <div className="workspace">
         <aside className="sidebar">
-          {loadError && <p className="state-msg state-error" role="alert">Could not load data: {loadError}</p>}
+          {loadError && <p className="state-msg state-error" role="alert">Could not load data: {loadError}. <button type="button" className="btn btn-ghost" onClick={() => window.location.reload()}>Retry</button></p>}
           {!client && !loadError && <p className="state-msg" role="status">Loading scenarios…</p>}
           <ScenarioPicker scenarios={scenarios} selectedId={selectedId} disabled={running} onSelect={setSelectedId} />
           <ControlPanel
@@ -68,6 +68,8 @@ export default function App() {
           />
         </aside>
         <main className="main">
+          {run.status === 'failed' && <p className="state-msg state-error" role="alert">{run.error ?? 'The run failed.'} Nothing was concluded from this run.</p>}
+          {run.status === 'stopped' && <p className="state-msg" role="status">Run stopped before it finished. Partial results are shown as they were.</p>}
           <AgentBoard agents={agents} run={run} selected={drawerRole} onSelect={(r) => setDrawerRole((cur) => (cur === r ? null : r))} />
           <div className="lower">
             <MessageLog messages={run.messages} agents={agents} />
