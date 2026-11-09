@@ -2,7 +2,9 @@ import { useEffect, useState } from 'react'
 import { resolveApi, type AgentInfo, type ApiClient, type Scenario } from './api'
 import { Header } from './components/Header'
 import { ScenarioPicker } from './components/ScenarioPicker'
-import { initialRunState } from './state/runState'
+import { ControlPanel } from './components/ControlPanel'
+import { defaultControls, useRunController } from './state/useRunController'
+import type { ControlValue, ControlValues } from './api'
 
 export default function App() {
   const [client, setClient] = useState<ApiClient | null>(null)
@@ -31,7 +33,14 @@ export default function App() {
     return () => { cancelled = true }
   }, [])
 
-  const run = initialRunState(agents)
+  const [controlValues, setControlValues] = useState<Record<string, ControlValues>>({})
+  const ctl = useRunController(client, agents, scenarios)
+  const run = ctl.state
+  const running = run.status === 'running'
+  const scenario = scenarios.find((s) => s.id === selectedId) ?? null
+  const values: ControlValues = scenario ? { ...defaultControls(scenario), ...controlValues[scenario.id] } : {}
+  const setValue = (id: string, v: ControlValue) =>
+    scenario && setControlValues((c) => ({ ...c, [scenario.id]: { ...values, [id]: v } }))
 
   return (
     <div className="app">
@@ -40,7 +49,16 @@ export default function App() {
         <aside className="sidebar">
           {loadError && <p className="state-msg state-error" role="alert">Could not load data: {loadError}</p>}
           {!client && !loadError && <p className="state-msg" role="status">Loading scenarios…</p>}
-          <ScenarioPicker scenarios={scenarios} selectedId={selectedId} disabled={false} onSelect={setSelectedId} />
+          <ScenarioPicker scenarios={scenarios} selectedId={selectedId} disabled={running} onSelect={setSelectedId} />
+          <ControlPanel
+            scenario={scenario} values={values} running={running} stepMode={ctl.stepMode} queued={ctl.queued}
+            runAll={ctl.runAll} isMock={client?.mode === 'mock'}
+            onChange={setValue}
+            onReset={() => scenario && setControlValues((c) => ({ ...c, [scenario.id]: defaultControls(scenario) }))}
+            onRun={() => scenario && void ctl.run(scenario, values)}
+            onRunStep={() => scenario && void ctl.runStepwise(scenario, values)}
+            onNext={ctl.next} onRunAll={() => void ctl.runEvery()} onStop={ctl.stop}
+          />
         </aside>
         <main className="main" />
       </div>
