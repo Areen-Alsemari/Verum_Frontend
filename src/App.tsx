@@ -4,6 +4,7 @@ import { Header } from './components/Header'
 import { ScenarioPicker } from './components/ScenarioPicker'
 import { AgentBoard } from './components/AgentBoard'
 import { AgentDrawer } from './components/AgentDrawer'
+import { MessageLog } from './components/MessageLog'
 import { ControlPanel } from './components/ControlPanel'
 import { defaultControls, useRunController } from './state/useRunController'
 import type { ControlValue, ControlValues } from './api'
@@ -66,6 +67,9 @@ export default function App() {
         </aside>
         <main className="main">
           <AgentBoard agents={agents} run={run} selected={drawerRole} onSelect={(r) => setDrawerRole((cur) => (cur === r ? null : r))} />
+          <div className="lower">
+            <MessageLog messages={run.messages} agents={agents} />
+          </div>
         </main>
       </div>
       {drawerRole && agentsByKey[drawerRole] && (

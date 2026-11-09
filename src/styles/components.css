@@ -110,3 +110,21 @@
 .issue-sev { font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); }
 .chips { display: flex; flex-wrap: wrap; gap: 6px; }
 .chip { font-family: var(--font-mono); font-size: 12px; padding: 2px 8px; border: 1px solid var(--line-strong); border-radius: 999px; color: var(--champagne); }
+
+/* ---------- message log ---------- */
+.log-top { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 10px; }
+.log-tools { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 12px; }
+.log-field { flex: 1 1 200px; }
+.kind-filters { display: flex; gap: 6px; }
+.kind-filter { padding: 5px 10px; border-radius: 999px; font-size: 12px; border: 1px solid var(--line-strong); background: transparent; color: var(--muted); text-transform: capitalize; }
+.kind-filter.is-on { color: var(--k); border-color: var(--k); background: rgba(255,255,255,0.03); }
+.log-list { list-style: none; margin: 0; padding: 0; max-height: 640px; overflow: auto; display: flex; flex-direction: column; gap: 8px; }
+.log-row { border: 1px solid var(--line); border-left: 3px solid var(--k); border-radius: var(--radius-sm); padding: 8px 10px; background: var(--bg-1); }
+.log-row.is-fail { background: rgba(244,100,92,0.08); border-color: rgba(244,100,92,0.5); border-left-color: var(--red); }
+.log-line { display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; font-size: 12px; }
+.log-ts { font-family: var(--font-mono); color: var(--muted); }
+.log-kind { color: var(--k); font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; font-size: 11px; }
+.log-route { color: var(--champagne); }
+.log-summary { margin-top: 4px; font-size: 13.5px; }
+.log-more { margin-top: 4px; background: none; border: none; padding: 2px 0; color: var(--amber-hi); font-size: 12px; text-decoration: underline; text-underline-offset: 3px; }
+.log-json { margin: 6px 0 0; padding: 10px; background: var(--bg-0); border: 1px solid var(--line); border-radius: 6px; font-size: 12px; overflow: auto; max-height: 260px; color: var(--champagne); }
