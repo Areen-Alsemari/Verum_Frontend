@@ -1,0 +1,38 @@
+.app { min-height: 100vh; display: flex; flex-direction: column; padding-bottom: 44px; }
+
+.header {
+  position: relative;
+  border-bottom: 1px solid var(--line);
+  background-color: var(--bg-0);
+  background-image:
+    linear-gradient(90deg, rgba(7,8,10,0.96) 0%, rgba(7,8,10,0.82) 45%, rgba(7,8,10,0.55) 100%),
+    linear-gradient(180deg, rgba(7,8,10,0.55) 0%, rgba(7,8,10,0.92) 100%),
+    url('/brand/hero-refinery-night.webp');
+  background-size: cover;
+  background-position: center 82%;
+}
+.header-inner {
+  max-width: 1840px; margin: 0 auto; padding: 18px 28px;
+  display: flex; align-items: center; justify-content: space-between; gap: 24px;
+}
+
+.workspace {
+  max-width: 1840px; width: 100%; margin: 0 auto; padding: 20px 28px 28px;
+  display: grid; grid-template-columns: 380px minmax(0, 1fr); gap: 20px; align-items: start;
+}
+.sidebar { display: flex; flex-direction: column; gap: 16px; position: sticky; top: 12px; max-height: calc(100vh - 70px); overflow: auto; }
+.main { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+.lower { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 20px; align-items: start; }
+
+@media (max-width: 1300px) {
+  .workspace { grid-template-columns: 330px minmax(0, 1fr); padding-inline: 16px; }
+  .lower { grid-template-columns: minmax(0, 1fr); }
+}
+
+.honesty-bar {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 50;
+  background: var(--bg-1); border-top: 1px solid var(--amber);
+  padding: 10px 28px; display: flex; gap: 14px; align-items: center; justify-content: center;
+  font-size: 14px; color: var(--cream); letter-spacing: 0.02em;
+}
+.honesty-bar strong { color: var(--amber-hi); font-weight: 600; }

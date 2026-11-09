@@ -1,0 +1,36 @@
+:root {
+  /* surfaces */
+  --bg-0: #07080a;
+  --bg-1: #0b0c0e;
+  --bg-2: #101113;
+  --bg-3: #16171a;
+  --bg-4: #1d1e22;
+  --line: rgba(217, 200, 169, 0.14);
+  --line-strong: rgba(217, 200, 169, 0.3);
+
+  /* accents */
+  --amber: #c8924a;
+  --amber-hi: #d6a45a;
+  --amber-glow: rgba(214, 164, 90, 0.35);
+  --champagne: #d9c8a9;
+  --cream: #f3ece0;
+  --muted: #a8a193;
+  --faint: #7d786d;
+
+  /* status */
+  --yellow: #f2c94c;
+  --orange: #f2994a;
+  --red: #f4645c;
+  --blue: #5aa9f5;
+  --green: #2fd29a;
+
+  /* type */
+  --font-display: 'Michroma', 'Syncopate', system-ui, sans-serif;
+  --font-body: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+
+  --radius: 12px;
+  --radius-sm: 8px;
+  --gap: 16px;
+  --focus: 0 0 0 2px var(--bg-0), 0 0 0 4px var(--amber-hi);
+}
