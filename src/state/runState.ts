@@ -39,6 +39,7 @@ export interface RunState {
 
 export type RunAction =
   | { type: 'reset'; agents: AgentInfo[] }
+  | { type: 'begin'; scenarioId: string }
   | { type: 'event'; event: RunEvent }
   | { type: 'bundle'; bundle: RunBundle }
   | { type: 'stopped' }
@@ -64,6 +65,8 @@ export function runReducer(state: RunState, action: RunAction): RunState {
   switch (action.type) {
     case 'reset':
       return initialRunState(action.agents)
+    case 'begin':
+      return { ...initialRunState(Object.values(state.agents).map((a) => ({ role_key: a.role_key, name: '', description: '', order: 0 }))), status: 'running', scenarioId: action.scenarioId }
     case 'bundle':
       return { ...state, bundle: action.bundle }
     case 'stopped':

@@ -116,3 +116,12 @@ describe('mock engine', () => {
     }
   })
 })
+
+describe('begin', () => {
+  it('marks the run as running before any event arrives (needed for step mode)', () => {
+    const s = runReducer(initialRunState(AGENTS), { type: 'begin', scenarioId: 'quiet_window' })
+    expect(s.status).toBe('running')
+    expect(Object.keys(s.agents)).toHaveLength(8)
+    expect(runReducer(s, { type: 'stopped' }).status).toBe('stopped')
+  })
+})

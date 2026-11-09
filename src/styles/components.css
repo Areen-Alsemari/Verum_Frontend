@@ -177,3 +177,4 @@
 .res-fail { color: var(--red); border-color: var(--red); background: rgba(244,100,92,0.1); }
 .res-none { color: var(--muted); border-color: var(--line-strong); border-style: dashed; }
 @media (max-width: 1500px) { .checks-grid { grid-template-columns: minmax(0, 1fr); } }
+.agent-facts dd { white-space: nowrap; }

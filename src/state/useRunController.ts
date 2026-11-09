@@ -53,6 +53,7 @@ export function useRunController(client: ApiClient | null, agents: AgentInfo[], 
     if (!client) return
     teardown()
     dispatch({ type: 'reset', agents: agentsRef.current })
+    dispatch({ type: 'begin', scenarioId: scenario.id })
     setActiveScenarioId(scenario.id)
     setStepMode(step)
     let runId: string
