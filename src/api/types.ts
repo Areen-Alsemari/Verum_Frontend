@@ -158,7 +158,8 @@ export type RunEvent =
 // ---- result bundle: GET /api/runs/{id} -----------------------------------
 
 export type Severity = 'info' | 'warning' | 'critical'
-export type AssetId = 'storage_tank' | 'pump' | 'valve' | 'pipeline' | 'sensor' | 'terminal'
+/** An asset id of the simulated terminal, exactly as in the facility definition (e.g. TK-101, XV-R000, E-PA2). */
+export type AssetId = string
 
 export interface FlaggedAsset {
   asset: AssetId

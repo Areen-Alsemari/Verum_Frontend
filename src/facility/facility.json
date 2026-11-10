@@ -1,0 +1,2383 @@
+{
+ "schema": "verum-facility-snapshot/1",
+ "source": {
+  "verum_commit": "b06eead216c652a4f851a688107f1bffb718c54f",
+  "data_release": "verum_reference_v2",
+  "public_reference_sha256": "06a342dfb9839b9eca042dc95fded016d91d11fdbeb5b7f58d31357b39e20403",
+  "files": [
+   "data/reference_release_v2/verum_reference_v2/knowledge/public_reference.json",
+   "config/canonical_sensor_contract.json",
+   "config/topology_contract.json",
+   "config/route_geometry.json",
+   "tests/agents/fixtures/chained/topology_dependency.request.json"
+  ],
+  "simulated": true
+ },
+ "layout": {
+  "kind": "schematic_layered",
+  "note": "Schematic, not to scale. Layered left to right by flow direction from the declared connections.",
+  "design_coordinates_note": "design_position_m is copied from config/route_geometry.json (status: provisional, unit: m) and is not used for drawing."
+ },
+ "counts": {
+  "assets": 49,
+  "assets_by_kind": {
+   "isolation_valve": 11,
+   "pipe": 28,
+   "pressure_transmitter": 5,
+   "pump": 2,
+   "tank": 3
+  },
+  "edges": 28,
+  "graph_nodes": 29,
+  "sensors": 30
+ },
+ "assets": [
+  {
+   "asset_id": "TK-101",
+   "kind": "tank",
+   "label": "TK-101",
+   "graph_role": "port_owner",
+   "ports": [
+    "TK-101:receipt_nozzle",
+    "TK-101:outlet_nozzle"
+   ],
+   "connects_to": [
+    "E-R101b",
+    "E-S101a"
+   ],
+   "position_hint": [
+    -16.5,
+    0.0,
+    -13.0
+   ],
+   "design_position_m": {
+    "x": 30.0,
+    "y": 0.0,
+    "z": 0.0
+   },
+   "route_ids": [
+    "R-101",
+    "S-101"
+   ],
+   "area": "Tank storage",
+   "declared_specs": true,
+   "specs": {
+    "diameter_m": 30,
+    "shell_height_m": 15,
+    "initial_level_m": 9.0,
+    "inlet_z_m": 0.6,
+    "outlet_z_m": 0.4,
+    "normal_min_level_m": 1.8,
+    "normal_max_level_m": 12,
+    "high_alarm_m": 12.5,
+    "independent_high_high_m": 13,
+    "critical_model_limit_m": 14
+   }
+  },
+  {
+   "asset_id": "TK-102",
+   "kind": "tank",
+   "label": "TK-102",
+   "graph_role": "port_owner",
+   "ports": [
+    "TK-102:receipt_nozzle",
+    "TK-102:outlet_nozzle"
+   ],
+   "connects_to": [
+    "E-R102b",
+    "E-S102a"
+   ],
+   "position_hint": [
+    -16.5,
+    0.0,
+    0.0
+   ],
+   "design_position_m": {
+    "x": 0.0,
+    "y": 45.0,
+    "z": 0.0
+   },
+   "route_ids": [
+    "R-102",
+    "S-102"
+   ],
+   "area": "Tank storage",
+   "declared_specs": true,
+   "specs": {
+    "diameter_m": 30,
+    "shell_height_m": 15,
+    "initial_level_m": 7.0,
+    "inlet_z_m": 0.6,
+    "outlet_z_m": 0.4,
+    "normal_min_level_m": 1.8,
+    "normal_max_level_m": 12,
+    "high_alarm_m": 12.5,
+    "independent_high_high_m": 13,
+    "critical_model_limit_m": 14
+   }
+  },
+  {
+   "asset_id": "TK-103",
+   "kind": "tank",
+   "label": "TK-103",
+   "graph_role": "port_owner",
+   "ports": [
+    "TK-103:receipt_nozzle",
+    "TK-103:outlet_nozzle"
+   ],
+   "connects_to": [
+    "E-R103b",
+    "E-S103a"
+   ],
+   "position_hint": [
+    -16.5,
+    0.0,
+    13.0
+   ],
+   "design_position_m": {
+    "x": -40.0,
+    "y": 55.0,
+    "z": 0.0
+   },
+   "route_ids": [
+    "R-103",
+    "S-103"
+   ],
+   "area": "Tank storage",
+   "declared_specs": true,
+   "specs": {
+    "diameter_m": 30,
+    "shell_height_m": 15,
+    "initial_level_m": 5.0,
+    "inlet_z_m": 0.6,
+    "outlet_z_m": 0.4,
+    "normal_min_level_m": 1.8,
+    "normal_max_level_m": 12,
+    "high_alarm_m": 12.5,
+    "independent_high_high_m": 13,
+    "critical_model_limit_m": 14
+   }
+  },
+  {
+   "asset_id": "P-101A",
+   "kind": "pump",
+   "label": "P-101A",
+   "graph_role": "node",
+   "connects_to": [
+    "E-PA1",
+    "E-PA2"
+   ],
+   "position_hint": [
+    20.0,
+    0.0,
+    -3.0
+   ],
+   "design_position_m": {
+    "x": -5.0,
+    "y": -65.0,
+    "z": 0.5
+   },
+   "route_ids": [
+    "P-A"
+   ],
+   "area": "Pump skid",
+   "declared_specs": false
+  },
+  {
+   "asset_id": "P-101B",
+   "kind": "pump",
+   "label": "P-101B",
+   "graph_role": "node",
+   "connects_to": [
+    "E-PB1",
+    "E-PB2"
+   ],
+   "position_hint": [
+    20.0,
+    0.0,
+    3.0
+   ],
+   "design_position_m": {
+    "x": 5.0,
+    "y": -65.0,
+    "z": 0.5
+   },
+   "route_ids": [
+    "P-B"
+   ],
+   "area": "Pump skid",
+   "declared_specs": false
+  },
+  {
+   "asset_id": "XV-PAI",
+   "kind": "isolation_valve",
+   "label": "XV-PAI",
+   "graph_role": "node",
+   "connects_to": [
+    "E-PA0",
+    "E-PA1"
+   ],
+   "position_hint": [
+    14.5,
+    0.0,
+    -3.0
+   ],
+   "design_position_m": {
+    "x": -5.0,
+    "y": -62.0,
+    "z": 0.5
+   },
+   "route_ids": [
+    "P-A"
+   ],
+   "area": "Pump skid",
+   "declared_specs": false
+  },
+  {
+   "asset_id": "XV-PAO",
+   "kind": "isolation_valve",
+   "label": "XV-PAO",
+   "graph_role": "node",
+   "connects_to": [
+    "E-PA3",
+    "E-PA4"
+   ],
+   "position_hint": [
+    31.0,
+    0.0,
+    -3.0
+   ],
+   "design_position_m": {
+    "x": -5.0,
+    "y": -69.0,
+    "z": 0.5
+   },
+   "route_ids": [
+    "P-A"
+   ],
+   "area": "Pump skid",
+   "declared_specs": false
+  },
+  {
+   "asset_id": "XV-PBI",
+   "kind": "isolation_valve",
+   "label": "XV-PBI",
+   "graph_role": "node",
+   "connects_to": [
+    "E-PB0",
+    "E-PB1"
+   ],
+   "position_hint": [
+    14.5,
+    0.0,
+    3.0
+   ],
+   "design_position_m": {
+    "x": 5.0,
+    "y": -62.0,
+    "z": 0.5
+   },
+   "route_ids": [
+    "P-B"
+   ],
+   "area": "Pump skid",
+   "declared_specs": false
+  },
+  {
+   "asset_id": "XV-PBO",
+   "kind": "isolation_valve",
+   "label": "XV-PBO",
+   "graph_role": "node",
+   "connects_to": [
+    "E-PB3",
+    "E-PB4"
+   ],
+   "position_hint": [
+    31.0,
+    0.0,
+    3.0
+   ],
+   "design_position_m": {
+    "x": 5.0,
+    "y": -69.0,
+    "z": 0.5
+   },
+   "route_ids": [
+    "P-B"
+   ],
+   "area": "Pump skid",
+   "declared_specs": false
+  },
+  {
+   "asset_id": "XV-R000",
+   "kind": "isolation_valve",
+   "label": "XV-R000",
+   "graph_role": "node",
+   "connects_to": [
+    "E002",
+    "E003"
+   ],
+   "position_hint": [
+    -36.5,
+    0.0,
+    0.0
+   ],
+   "design_position_m": {
+    "x": -55.0,
+    "y": -75.0,
+    "z": 1.0
+   },
+   "route_ids": [
+    "R-MAIN"
+   ],
+   "area": "Receipt line",
+   "declared_specs": false
+  },
+  {
+   "asset_id": "XV-R101",
+   "kind": "isolation_valve",
+   "label": "XV-R101",
+   "graph_role": "node",
+   "connects_to": [
+    "E-R101a",
+    "E-R101b"
+   ],
+   "position_hint": [
+    -25.5,
+    0.0,
+    -9.0
+   ],
+   "design_position_m": {
+    "x": 30.0,
+    "y": -23.6,
+    "z": 1.0
+   },
+   "route_ids": [
+    "R-101"
+   ],
+   "area": "Tank receipt branches",
+   "declared_specs": false
+  },
+  {
+   "asset_id": "XV-R102",
+   "kind": "isolation_valve",
+   "label": "XV-R102",
+   "graph_role": "node",
+   "connects_to": [
+    "E-R102a",
+    "E-R102b"
+   ],
+   "position_hint": [
+    -25.5,
+    0.0,
+    0.0
+   ],
+   "design_position_m": {
+    "x": 12.3,
+    "y": 26.7,
+    "z": 1.0
+   },
+   "route_ids": [
+    "R-102"
+   ],
+   "area": "Tank receipt branches",
+   "declared_specs": false
+  },
+  {
+   "asset_id": "XV-R103",
+   "kind": "isolation_valve",
+   "label": "XV-R103",
+   "graph_role": "node",
+   "connects_to": [
+    "E-R103a",
+    "E-R103b"
+   ],
+   "position_hint": [
+    -25.5,
+    0.0,
+    9.0
+   ],
+   "design_position_m": {
+    "x": -40.0,
+    "y": 17.4,
+    "z": 1.0
+   },
+   "route_ids": [
+    "R-103"
+   ],
+   "area": "Tank receipt branches",
+   "declared_specs": false
+  },
+  {
+   "asset_id": "XV-S101",
+   "kind": "isolation_valve",
+   "label": "XV-S101",
+   "graph_role": "node",
+   "connects_to": [
+    "E-S101a",
+    "E-S101b"
+   ],
+   "position_hint": [
+    -2.0,
+    0.0,
+    -9.0
+   ],
+   "design_position_m": {
+    "x": 30.0,
+    "y": -26.9,
+    "z": 0.5
+   },
+   "route_ids": [
+    "S-101"
+   ],
+   "area": "Tank suction branches",
+   "declared_specs": false
+  },
+  {
+   "asset_id": "XV-S102",
+   "kind": "isolation_valve",
+   "label": "XV-S102",
+   "graph_role": "node",
+   "connects_to": [
+    "E-S102a",
+    "E-S102b"
+   ],
+   "position_hint": [
+    -2.0,
+    0.0,
+    0.0
+   ],
+   "design_position_m": {
+    "x": -17.45,
+    "y": 29.55,
+    "z": 0.5
+   },
+   "route_ids": [
+    "S-102"
+   ],
+   "area": "Tank suction branches",
+   "declared_specs": false
+  },
+  {
+   "asset_id": "XV-S103",
+   "kind": "isolation_valve",
+   "label": "XV-S103",
+   "graph_role": "node",
+   "connects_to": [
+    "E-S103a",
+    "E-S103b"
+   ],
+   "position_hint": [
+    -2.0,
+    0.0,
+    9.0
+   ],
+   "design_position_m": {
+    "x": -40.0,
+    "y": 16.1,
+    "z": 0.5
+   },
+   "route_ids": [
+    "S-103"
+   ],
+   "area": "Tank suction branches",
+   "declared_specs": false
+  },
+  {
+   "asset_id": "E001",
+   "kind": "pipe",
+   "label": "E001",
+   "graph_role": "edge",
+   "from_node": "PIPELINE_RECEIPT_BOUNDARY",
+   "to_node": "RECEIPT_METER",
+   "connects_to": [
+    "PIPELINE_RECEIPT_BOUNDARY",
+    "RECEIPT_METER"
+   ],
+   "position_hint": [
+    -44.75,
+    0.0,
+    0.0
+   ],
+   "route_ids": [
+    "R-MAIN"
+   ],
+   "area": "Receipt line",
+   "declared_specs": true,
+   "specs": {
+    "length_m": 30.0,
+    "inner_diameter_m": 0.30318,
+    "route_id": "R-MAIN"
+   }
+  },
+  {
+   "asset_id": "E002",
+   "kind": "pipe",
+   "label": "E002",
+   "graph_role": "edge",
+   "from_node": "RECEIPT_METER",
+   "to_node": "XV-R000",
+   "connects_to": [
+    "RECEIPT_METER",
+    "XV-R000"
+   ],
+   "position_hint": [
+    -39.25,
+    0.0,
+    0.0
+   ],
+   "route_ids": [
+    "R-MAIN"
+   ],
+   "area": "Receipt line",
+   "declared_specs": true,
+   "specs": {
+    "length_m": 15.0,
+    "inner_diameter_m": 0.30318,
+    "route_id": "R-MAIN"
+   }
+  },
+  {
+   "asset_id": "E003",
+   "kind": "pipe",
+   "label": "E003",
+   "graph_role": "edge",
+   "from_node": "XV-R000",
+   "to_node": "RECEIPT_HEADER",
+   "connects_to": [
+    "XV-R000",
+    "RECEIPT_HEADER"
+   ],
+   "position_hint": [
+    -33.75,
+    0.0,
+    0.0
+   ],
+   "route_ids": [
+    "R-MAIN"
+   ],
+   "area": "Receipt line",
+   "declared_specs": true,
+   "specs": {
+    "length_m": 105.0,
+    "inner_diameter_m": 0.30318,
+    "route_id": "R-MAIN"
+   }
+  },
+  {
+   "asset_id": "E-R101a",
+   "kind": "pipe",
+   "label": "E-R101a",
+   "graph_role": "edge",
+   "from_node": "RECEIPT_HEADER",
+   "to_node": "XV-R101",
+   "connects_to": [
+    "RECEIPT_HEADER",
+    "XV-R101"
+   ],
+   "position_hint": [
+    -28.25,
+    0.0,
+    -4.5
+   ],
+   "route_ids": [
+    "R-101"
+   ],
+   "area": "Tank receipt branches",
+   "declared_specs": true,
+   "specs": {
+    "length_m": 36.0,
+    "inner_diameter_m": 0.20274,
+    "route_id": "R-101"
+   }
+  },
+  {
+   "asset_id": "E-R101b",
+   "kind": "pipe",
+   "label": "E-R101b",
+   "graph_role": "edge",
+   "from_node": "XV-R101",
+   "to_node": "TK-101:receipt_nozzle",
+   "connects_to": [
+    "XV-R101",
+    "TK-101"
+   ],
+   "position_hint": [
+    -21.0,
+    0.0,
+    -11.0
+   ],
+   "route_ids": [
+    "R-101"
+   ],
+   "area": "Tank receipt branches",
+   "declared_specs": true,
+   "specs": {
+    "length_m": 9.0,
+    "inner_diameter_m": 0.20274,
+    "route_id": "R-101"
+   }
+  },
+  {
+   "asset_id": "E-S101a",
+   "kind": "pipe",
+   "label": "E-S101a",
+   "graph_role": "edge",
+   "from_node": "TK-101:outlet_nozzle",
+   "to_node": "XV-S101",
+   "connects_to": [
+    "TK-101",
+    "XV-S101"
+   ],
+   "position_hint": [
+    -9.25,
+    0.0,
+    -11.0
+   ],
+   "route_ids": [
+    "S-101"
+   ],
+   "area": "Tank suction branches",
+   "declared_specs": true,
+   "specs": {
+    "length_m": 12.0,
+    "inner_diameter_m": 0.20274,
+    "route_id": "S-101"
+   }
+  },
+  {
+   "asset_id": "E-S101b",
+   "kind": "pipe",
+   "label": "E-S101b",
+   "graph_role": "edge",
+   "from_node": "XV-S101",
+   "to_node": "SUCTION_HEADER",
+   "connects_to": [
+    "XV-S101",
+    "SUCTION_HEADER"
+   ],
+   "position_hint": [
+    0.75,
+    0.0,
+    -4.5
+   ],
+   "route_ids": [
+    "S-101"
+   ],
+   "area": "Tank suction branches",
+   "declared_specs": true,
+   "specs": {
+    "length_m": 48.0,
+    "inner_diameter_m": 0.20274,
+    "route_id": "S-101"
+   }
+  },
+  {
+   "asset_id": "E-R102a",
+   "kind": "pipe",
+   "label": "E-R102a",
+   "graph_role": "edge",
+   "from_node": "RECEIPT_HEADER",
+   "to_node": "XV-R102",
+   "connects_to": [
+    "RECEIPT_HEADER",
+    "XV-R102"
+   ],
+   "position_hint": [
+    -28.25,
+    0.0,
+    0.0
+   ],
+   "route_ids": [
+    "R-102"
+   ],
+   "area": "Tank receipt branches",
+   "declared_specs": true,
+   "specs": {
+    "length_m": 64.0,
+    "inner_diameter_m": 0.20274,
+    "route_id": "R-102"
+   }
+  },
+  {
+   "asset_id": "E-R102b",
+   "kind": "pipe",
+   "label": "E-R102b",
+   "graph_role": "edge",
+   "from_node": "XV-R102",
+   "to_node": "TK-102:receipt_nozzle",
+   "connects_to": [
+    "XV-R102",
+    "TK-102"
+   ],
+   "position_hint": [
+    -21.0,
+    0.0,
+    0.0
+   ],
+   "route_ids": [
+    "R-102"
+   ],
+   "area": "Tank receipt branches",
+   "declared_specs": true,
+   "specs": {
+    "length_m": 16.0,
+    "inner_diameter_m": 0.20274,
+    "route_id": "R-102"
+   }
+  },
+  {
+   "asset_id": "E-S102a",
+   "kind": "pipe",
+   "label": "E-S102a",
+   "graph_role": "edge",
+   "from_node": "TK-102:outlet_nozzle",
+   "to_node": "XV-S102",
+   "connects_to": [
+    "TK-102",
+    "XV-S102"
+   ],
+   "position_hint": [
+    -9.25,
+    0.0,
+    0.0
+   ],
+   "route_ids": [
+    "S-102"
+   ],
+   "area": "Tank suction branches",
+   "declared_specs": true,
+   "specs": {
+    "length_m": 18.0,
+    "inner_diameter_m": 0.20274,
+    "route_id": "S-102"
+   }
+  },
+  {
+   "asset_id": "E-S102b",
+   "kind": "pipe",
+   "label": "E-S102b",
+   "graph_role": "edge",
+   "from_node": "XV-S102",
+   "to_node": "SUCTION_HEADER",
+   "connects_to": [
+    "XV-S102",
+    "SUCTION_HEADER"
+   ],
+   "position_hint": [
+    0.75,
+    0.0,
+    0.0
+   ],
+   "route_ids": [
+    "S-102"
+   ],
+   "area": "Tank suction branches",
+   "declared_specs": true,
+   "specs": {
+    "length_m": 72.0,
+    "inner_diameter_m": 0.20274,
+    "route_id": "S-102"
+   }
+  },
+  {
+   "asset_id": "E-R103a",
+   "kind": "pipe",
+   "label": "E-R103a",
+   "graph_role": "edge",
+   "from_node": "RECEIPT_HEADER",
+   "to_node": "XV-R103",
+   "connects_to": [
+    "RECEIPT_HEADER",
+    "XV-R103"
+   ],
+   "position_hint": [
+    -28.25,
+    0.0,
+    4.5
+   ],
+   "route_ids": [
+    "R-103"
+   ],
+   "area": "Tank receipt branches",
+   "declared_specs": true,
+   "specs": {
+    "length_m": 92.0,
+    "inner_diameter_m": 0.20274,
+    "route_id": "R-103"
+   }
+  },
+  {
+   "asset_id": "E-R103b",
+   "kind": "pipe",
+   "label": "E-R103b",
+   "graph_role": "edge",
+   "from_node": "XV-R103",
+   "to_node": "TK-103:receipt_nozzle",
+   "connects_to": [
+    "XV-R103",
+    "TK-103"
+   ],
+   "position_hint": [
+    -21.0,
+    0.0,
+    11.0
+   ],
+   "route_ids": [
+    "R-103"
+   ],
+   "area": "Tank receipt branches",
+   "declared_specs": true,
+   "specs": {
+    "length_m": 23.0,
+    "inner_diameter_m": 0.20274,
+    "route_id": "R-103"
+   }
+  },
+  {
+   "asset_id": "E-S103a",
+   "kind": "pipe",
+   "label": "E-S103a",
+   "graph_role": "edge",
+   "from_node": "TK-103:outlet_nozzle",
+   "to_node": "XV-S103",
+   "connects_to": [
+    "TK-103",
+    "XV-S103"
+   ],
+   "position_hint": [
+    -9.25,
+    0.0,
+    11.0
+   ],
+   "route_ids": [
+    "S-103"
+   ],
+   "area": "Tank suction branches",
+   "declared_specs": true,
+   "specs": {
+    "length_m": 24.0,
+    "inner_diameter_m": 0.20274,
+    "route_id": "S-103"
+   }
+  },
+  {
+   "asset_id": "E-S103b",
+   "kind": "pipe",
+   "label": "E-S103b",
+   "graph_role": "edge",
+   "from_node": "XV-S103",
+   "to_node": "SUCTION_HEADER",
+   "connects_to": [
+    "XV-S103",
+    "SUCTION_HEADER"
+   ],
+   "position_hint": [
+    0.75,
+    0.0,
+    4.5
+   ],
+   "route_ids": [
+    "S-103"
+   ],
+   "area": "Tank suction branches",
+   "declared_specs": true,
+   "specs": {
+    "length_m": 96.0,
+    "inner_diameter_m": 0.20274,
+    "route_id": "S-103"
+   }
+  },
+  {
+   "asset_id": "E-SH",
+   "kind": "pipe",
+   "label": "E-SH",
+   "graph_role": "edge",
+   "from_node": "SUCTION_HEADER",
+   "to_node": "PUMP_SUCTION_TEE",
+   "connects_to": [
+    "SUCTION_HEADER",
+    "PUMP_SUCTION_TEE"
+   ],
+   "position_hint": [
+    6.25,
+    0.0,
+    0.0
+   ],
+   "route_ids": [
+    "S-HEADER"
+   ],
+   "area": "Suction header",
+   "declared_specs": true,
+   "specs": {
+    "length_m": 35.0,
+    "inner_diameter_m": 0.25446,
+    "route_id": "S-HEADER"
+   }
+  },
+  {
+   "asset_id": "E-PA0",
+   "kind": "pipe",
+   "label": "E-PA0",
+   "graph_role": "edge",
+   "from_node": "PUMP_SUCTION_TEE",
+   "to_node": "XV-PAI",
+   "connects_to": [
+    "PUMP_SUCTION_TEE",
+    "XV-PAI"
+   ],
+   "position_hint": [
+    11.75,
+    0.0,
+    -1.5
+   ],
+   "route_ids": [
+    "P-A"
+   ],
+   "area": "Pump skid",
+   "declared_specs": true,
+   "specs": {
+    "length_m": 7.0,
+    "inner_diameter_m": 0.20274,
+    "route_id": "P-A"
+   }
+  },
+  {
+   "asset_id": "E-PA1",
+   "kind": "pipe",
+   "label": "E-PA1",
+   "graph_role": "edge",
+   "from_node": "XV-PAI",
+   "to_node": "P-101A",
+   "connects_to": [
+    "XV-PAI",
+    "P-101A"
+   ],
+   "position_hint": [
+    17.25,
+    0.0,
+    -3.0
+   ],
+   "route_ids": [
+    "P-A"
+   ],
+   "area": "Pump skid",
+   "declared_specs": true,
+   "specs": {
+    "length_m": 3.0,
+    "inner_diameter_m": 0.20274,
+    "route_id": "P-A"
+   }
+  },
+  {
+   "asset_id": "E-PA2",
+   "kind": "pipe",
+   "label": "E-PA2",
+   "graph_role": "edge",
+   "from_node": "P-101A",
+   "to_node": "CV-PA",
+   "connects_to": [
+    "P-101A",
+    "CV-PA"
+   ],
+   "position_hint": [
+    22.75,
+    0.0,
+    -3.0
+   ],
+   "route_ids": [
+    "P-A"
+   ],
+   "area": "Pump skid",
+   "declared_specs": true,
+   "specs": {
+    "length_m": 2.0,
+    "inner_diameter_m": 0.20274,
+    "route_id": "P-A"
+   }
+  },
+  {
+   "asset_id": "E-PA3",
+   "kind": "pipe",
+   "label": "E-PA3",
+   "graph_role": "edge",
+   "from_node": "CV-PA",
+   "to_node": "XV-PAO",
+   "connects_to": [
+    "CV-PA",
+    "XV-PAO"
+   ],
+   "position_hint": [
+    28.25,
+    0.0,
+    -3.0
+   ],
+   "route_ids": [
+    "P-A"
+   ],
+   "area": "Pump skid",
+   "declared_specs": true,
+   "specs": {
+    "length_m": 2.0,
+    "inner_diameter_m": 0.20274,
+    "route_id": "P-A"
+   }
+  },
+  {
+   "asset_id": "E-PA4",
+   "kind": "pipe",
+   "label": "E-PA4",
+   "graph_role": "edge",
+   "from_node": "XV-PAO",
+   "to_node": "DISCHARGE_HEADER",
+   "connects_to": [
+    "XV-PAO",
+    "DISCHARGE_HEADER"
+   ],
+   "position_hint": [
+    33.75,
+    0.0,
+    -1.5
+   ],
+   "route_ids": [
+    "P-A"
+   ],
+   "area": "Pump skid",
+   "declared_specs": true,
+   "specs": {
+    "length_m": 6.0,
+    "inner_diameter_m": 0.20274,
+    "route_id": "P-A"
+   }
+  },
+  {
+   "asset_id": "E-PB0",
+   "kind": "pipe",
+   "label": "E-PB0",
+   "graph_role": "edge",
+   "from_node": "PUMP_SUCTION_TEE",
+   "to_node": "XV-PBI",
+   "connects_to": [
+    "PUMP_SUCTION_TEE",
+    "XV-PBI"
+   ],
+   "position_hint": [
+    11.75,
+    0.0,
+    1.5
+   ],
+   "route_ids": [
+    "P-B"
+   ],
+   "area": "Pump skid",
+   "declared_specs": true,
+   "specs": {
+    "length_m": 7.0,
+    "inner_diameter_m": 0.20274,
+    "route_id": "P-B"
+   }
+  },
+  {
+   "asset_id": "E-PB1",
+   "kind": "pipe",
+   "label": "E-PB1",
+   "graph_role": "edge",
+   "from_node": "XV-PBI",
+   "to_node": "P-101B",
+   "connects_to": [
+    "XV-PBI",
+    "P-101B"
+   ],
+   "position_hint": [
+    17.25,
+    0.0,
+    3.0
+   ],
+   "route_ids": [
+    "P-B"
+   ],
+   "area": "Pump skid",
+   "declared_specs": true,
+   "specs": {
+    "length_m": 3.0,
+    "inner_diameter_m": 0.20274,
+    "route_id": "P-B"
+   }
+  },
+  {
+   "asset_id": "E-PB2",
+   "kind": "pipe",
+   "label": "E-PB2",
+   "graph_role": "edge",
+   "from_node": "P-101B",
+   "to_node": "CV-PB",
+   "connects_to": [
+    "P-101B",
+    "CV-PB"
+   ],
+   "position_hint": [
+    22.75,
+    0.0,
+    3.0
+   ],
+   "route_ids": [
+    "P-B"
+   ],
+   "area": "Pump skid",
+   "declared_specs": true,
+   "specs": {
+    "length_m": 2.0,
+    "inner_diameter_m": 0.20274,
+    "route_id": "P-B"
+   }
+  },
+  {
+   "asset_id": "E-PB3",
+   "kind": "pipe",
+   "label": "E-PB3",
+   "graph_role": "edge",
+   "from_node": "CV-PB",
+   "to_node": "XV-PBO",
+   "connects_to": [
+    "CV-PB",
+    "XV-PBO"
+   ],
+   "position_hint": [
+    28.25,
+    0.0,
+    3.0
+   ],
+   "route_ids": [
+    "P-B"
+   ],
+   "area": "Pump skid",
+   "declared_specs": true,
+   "specs": {
+    "length_m": 2.0,
+    "inner_diameter_m": 0.20274,
+    "route_id": "P-B"
+   }
+  },
+  {
+   "asset_id": "E-PB4",
+   "kind": "pipe",
+   "label": "E-PB4",
+   "graph_role": "edge",
+   "from_node": "XV-PBO",
+   "to_node": "DISCHARGE_HEADER",
+   "connects_to": [
+    "XV-PBO",
+    "DISCHARGE_HEADER"
+   ],
+   "position_hint": [
+    33.75,
+    0.0,
+    1.5
+   ],
+   "route_ids": [
+    "P-B"
+   ],
+   "area": "Pump skid",
+   "declared_specs": true,
+   "specs": {
+    "length_m": 6.0,
+    "inner_diameter_m": 0.20274,
+    "route_id": "P-B"
+   }
+  },
+  {
+   "asset_id": "E-D1",
+   "kind": "pipe",
+   "label": "E-D1",
+   "graph_role": "edge",
+   "from_node": "DISCHARGE_HEADER",
+   "to_node": "DELIVERY_METER",
+   "connects_to": [
+    "DISCHARGE_HEADER",
+    "DELIVERY_METER"
+   ],
+   "position_hint": [
+    39.25,
+    0.0,
+    0.0
+   ],
+   "route_ids": [
+    "D-MAIN"
+   ],
+   "area": "Delivery line",
+   "declared_specs": true,
+   "specs": {
+    "length_m": 150.0,
+    "inner_diameter_m": 0.20274,
+    "route_id": "D-MAIN"
+   }
+  },
+  {
+   "asset_id": "E-D2",
+   "kind": "pipe",
+   "label": "E-D2",
+   "graph_role": "edge",
+   "from_node": "DELIVERY_METER",
+   "to_node": "DISTRIBUTION_BOUNDARY",
+   "connects_to": [
+    "DELIVERY_METER",
+    "DISTRIBUTION_BOUNDARY"
+   ],
+   "position_hint": [
+    44.75,
+    0.0,
+    0.0
+   ],
+   "route_ids": [
+    "D-MAIN"
+   ],
+   "area": "Delivery line",
+   "declared_specs": true,
+   "specs": {
+    "length_m": 100.0,
+    "inner_diameter_m": 0.20274,
+    "route_id": "D-MAIN"
+   }
+  },
+  {
+   "asset_id": "PT-001",
+   "kind": "pressure_transmitter",
+   "label": "PT-001",
+   "graph_role": "mounted_instrument",
+   "mounted_on": {
+    "element_id": "E002",
+    "element_type": "edge",
+    "record_type": "edge_state"
+   },
+   "connects_to": [
+    "E002"
+   ],
+   "position_hint": [
+    -39.25,
+    0.0,
+    -2.2
+   ],
+   "route_ids": [
+    "R-MAIN"
+   ],
+   "area": "Receipt line",
+   "declared_specs": false
+  },
+  {
+   "asset_id": "PT-201",
+   "kind": "pressure_transmitter",
+   "label": "PT-201",
+   "graph_role": "mounted_instrument",
+   "mounted_on": {
+    "element_id": "PUMP_SUCTION_TEE",
+    "element_type": "node",
+    "record_type": "node_state"
+   },
+   "connects_to": [
+    "PUMP_SUCTION_TEE"
+   ],
+   "position_hint": [
+    9.0,
+    0.0,
+    -2.2
+   ],
+   "route_ids": [
+    "P-A",
+    "P-B",
+    "S-HEADER"
+   ],
+   "area": "Suction header",
+   "declared_specs": false
+  },
+  {
+   "asset_id": "PT-202A",
+   "kind": "pressure_transmitter",
+   "label": "PT-202A",
+   "graph_role": "mounted_instrument",
+   "mounted_on": {
+    "element_id": "E-PA2",
+    "element_type": "edge",
+    "record_type": "edge_state"
+   },
+   "connects_to": [
+    "E-PA2"
+   ],
+   "position_hint": [
+    22.75,
+    0.0,
+    -5.2
+   ],
+   "route_ids": [
+    "P-A"
+   ],
+   "area": "Pump skid",
+   "declared_specs": false
+  },
+  {
+   "asset_id": "PT-202B",
+   "kind": "pressure_transmitter",
+   "label": "PT-202B",
+   "graph_role": "mounted_instrument",
+   "mounted_on": {
+    "element_id": "E-PB2",
+    "element_type": "edge",
+    "record_type": "edge_state"
+   },
+   "connects_to": [
+    "E-PB2"
+   ],
+   "position_hint": [
+    22.75,
+    0.0,
+    5.2
+   ],
+   "route_ids": [
+    "P-B"
+   ],
+   "area": "Pump skid",
+   "declared_specs": false
+  },
+  {
+   "asset_id": "PT-203",
+   "kind": "pressure_transmitter",
+   "label": "PT-203",
+   "graph_role": "mounted_instrument",
+   "mounted_on": {
+    "element_id": "DISTRIBUTION_BOUNDARY",
+    "element_type": "node",
+    "record_type": "node_state"
+   },
+   "connects_to": [
+    "DISTRIBUTION_BOUNDARY"
+   ],
+   "position_hint": [
+    47.5,
+    0.0,
+    -2.2
+   ],
+   "route_ids": [
+    "D-MAIN"
+   ],
+   "area": "Delivery line",
+   "declared_specs": false
+  }
+ ],
+ "nodes": [
+  {
+   "node_id": "PIPELINE_RECEIPT_BOUNDARY",
+   "asset_id": null,
+   "port_of": null,
+   "role": "junction",
+   "design_position_m": {
+    "x": -100.0,
+    "y": -75.0,
+    "z": 1.0
+   },
+   "position_hint": [
+    -47.5,
+    0.0,
+    0.0
+   ]
+  },
+  {
+   "node_id": "RECEIPT_METER",
+   "asset_id": null,
+   "port_of": null,
+   "role": "junction",
+   "design_position_m": {
+    "x": -70.0,
+    "y": -75.0,
+    "z": 1.0
+   },
+   "position_hint": [
+    -42.0,
+    0.0,
+    0.0
+   ]
+  },
+  {
+   "node_id": "XV-R000",
+   "asset_id": "XV-R000",
+   "port_of": null,
+   "role": "asset",
+   "design_position_m": {
+    "x": -55.0,
+    "y": -75.0,
+    "z": 1.0
+   },
+   "position_hint": [
+    -36.5,
+    0.0,
+    0.0
+   ]
+  },
+  {
+   "node_id": "RECEIPT_HEADER",
+   "asset_id": null,
+   "port_of": null,
+   "role": "junction",
+   "design_position_m": {
+    "x": 0.0,
+    "y": -25.0,
+    "z": 1.0
+   },
+   "position_hint": [
+    -31.0,
+    0.0,
+    0.0
+   ]
+  },
+  {
+   "node_id": "XV-R101",
+   "asset_id": "XV-R101",
+   "port_of": null,
+   "role": "asset",
+   "design_position_m": {
+    "x": 30.0,
+    "y": -23.6,
+    "z": 1.0
+   },
+   "position_hint": [
+    -25.5,
+    0.0,
+    -9.0
+   ]
+  },
+  {
+   "node_id": "TK-101:receipt_nozzle",
+   "asset_id": null,
+   "port_of": "TK-101",
+   "role": "port",
+   "design_position_m": null,
+   "position_hint": [
+    -16.5,
+    0.0,
+    -13.0
+   ]
+  },
+  {
+   "node_id": "TK-101:outlet_nozzle",
+   "asset_id": null,
+   "port_of": "TK-101",
+   "role": "port",
+   "design_position_m": null,
+   "position_hint": [
+    -16.5,
+    0.0,
+    -13.0
+   ]
+  },
+  {
+   "node_id": "XV-S101",
+   "asset_id": "XV-S101",
+   "port_of": null,
+   "role": "asset",
+   "design_position_m": {
+    "x": 30.0,
+    "y": -26.9,
+    "z": 0.5
+   },
+   "position_hint": [
+    -2.0,
+    0.0,
+    -9.0
+   ]
+  },
+  {
+   "node_id": "SUCTION_HEADER",
+   "asset_id": null,
+   "port_of": null,
+   "role": "junction",
+   "design_position_m": {
+    "x": 0.0,
+    "y": -25.0,
+    "z": 0.5
+   },
+   "position_hint": [
+    3.5,
+    0.0,
+    0.0
+   ]
+  },
+  {
+   "node_id": "XV-R102",
+   "asset_id": "XV-R102",
+   "port_of": null,
+   "role": "asset",
+   "design_position_m": {
+    "x": 12.3,
+    "y": 26.7,
+    "z": 1.0
+   },
+   "position_hint": [
+    -25.5,
+    0.0,
+    0.0
+   ]
+  },
+  {
+   "node_id": "TK-102:receipt_nozzle",
+   "asset_id": null,
+   "port_of": "TK-102",
+   "role": "port",
+   "design_position_m": null,
+   "position_hint": [
+    -16.5,
+    0.0,
+    0.0
+   ]
+  },
+  {
+   "node_id": "TK-102:outlet_nozzle",
+   "asset_id": null,
+   "port_of": "TK-102",
+   "role": "port",
+   "design_position_m": null,
+   "position_hint": [
+    -16.5,
+    0.0,
+    0.0
+   ]
+  },
+  {
+   "node_id": "XV-S102",
+   "asset_id": "XV-S102",
+   "port_of": null,
+   "role": "asset",
+   "design_position_m": {
+    "x": -17.45,
+    "y": 29.55,
+    "z": 0.5
+   },
+   "position_hint": [
+    -2.0,
+    0.0,
+    0.0
+   ]
+  },
+  {
+   "node_id": "XV-R103",
+   "asset_id": "XV-R103",
+   "port_of": null,
+   "role": "asset",
+   "design_position_m": {
+    "x": -40.0,
+    "y": 17.4,
+    "z": 1.0
+   },
+   "position_hint": [
+    -25.5,
+    0.0,
+    9.0
+   ]
+  },
+  {
+   "node_id": "TK-103:receipt_nozzle",
+   "asset_id": null,
+   "port_of": "TK-103",
+   "role": "port",
+   "design_position_m": null,
+   "position_hint": [
+    -16.5,
+    0.0,
+    13.0
+   ]
+  },
+  {
+   "node_id": "TK-103:outlet_nozzle",
+   "asset_id": null,
+   "port_of": "TK-103",
+   "role": "port",
+   "design_position_m": null,
+   "position_hint": [
+    -16.5,
+    0.0,
+    13.0
+   ]
+  },
+  {
+   "node_id": "XV-S103",
+   "asset_id": "XV-S103",
+   "port_of": null,
+   "role": "asset",
+   "design_position_m": {
+    "x": -40.0,
+    "y": 16.1,
+    "z": 0.5
+   },
+   "position_hint": [
+    -2.0,
+    0.0,
+    9.0
+   ]
+  },
+  {
+   "node_id": "PUMP_SUCTION_TEE",
+   "asset_id": null,
+   "port_of": null,
+   "role": "junction",
+   "design_position_m": {
+    "x": 0.0,
+    "y": -60.0,
+    "z": 0.5
+   },
+   "position_hint": [
+    9.0,
+    0.0,
+    0.0
+   ]
+  },
+  {
+   "node_id": "XV-PAI",
+   "asset_id": "XV-PAI",
+   "port_of": null,
+   "role": "asset",
+   "design_position_m": {
+    "x": -5.0,
+    "y": -62.0,
+    "z": 0.5
+   },
+   "position_hint": [
+    14.5,
+    0.0,
+    -3.0
+   ]
+  },
+  {
+   "node_id": "P-101A",
+   "asset_id": "P-101A",
+   "port_of": null,
+   "role": "asset",
+   "design_position_m": {
+    "x": -5.0,
+    "y": -65.0,
+    "z": 0.5
+   },
+   "position_hint": [
+    20.0,
+    0.0,
+    -3.0
+   ]
+  },
+  {
+   "node_id": "CV-PA",
+   "asset_id": null,
+   "port_of": null,
+   "role": "junction",
+   "design_position_m": {
+    "x": -5.0,
+    "y": -67.0,
+    "z": 0.5
+   },
+   "position_hint": [
+    25.5,
+    0.0,
+    -3.0
+   ]
+  },
+  {
+   "node_id": "XV-PAO",
+   "asset_id": "XV-PAO",
+   "port_of": null,
+   "role": "asset",
+   "design_position_m": {
+    "x": -5.0,
+    "y": -69.0,
+    "z": 0.5
+   },
+   "position_hint": [
+    31.0,
+    0.0,
+    -3.0
+   ]
+  },
+  {
+   "node_id": "DISCHARGE_HEADER",
+   "asset_id": null,
+   "port_of": null,
+   "role": "junction",
+   "design_position_m": {
+    "x": 0.0,
+    "y": -70.0,
+    "z": 0.5
+   },
+   "position_hint": [
+    36.5,
+    0.0,
+    0.0
+   ]
+  },
+  {
+   "node_id": "XV-PBI",
+   "asset_id": "XV-PBI",
+   "port_of": null,
+   "role": "asset",
+   "design_position_m": {
+    "x": 5.0,
+    "y": -62.0,
+    "z": 0.5
+   },
+   "position_hint": [
+    14.5,
+    0.0,
+    3.0
+   ]
+  },
+  {
+   "node_id": "P-101B",
+   "asset_id": "P-101B",
+   "port_of": null,
+   "role": "asset",
+   "design_position_m": {
+    "x": 5.0,
+    "y": -65.0,
+    "z": 0.5
+   },
+   "position_hint": [
+    20.0,
+    0.0,
+    3.0
+   ]
+  },
+  {
+   "node_id": "CV-PB",
+   "asset_id": null,
+   "port_of": null,
+   "role": "junction",
+   "design_position_m": {
+    "x": 5.0,
+    "y": -67.0,
+    "z": 0.5
+   },
+   "position_hint": [
+    25.5,
+    0.0,
+    3.0
+   ]
+  },
+  {
+   "node_id": "XV-PBO",
+   "asset_id": "XV-PBO",
+   "port_of": null,
+   "role": "asset",
+   "design_position_m": {
+    "x": 5.0,
+    "y": -69.0,
+    "z": 0.5
+   },
+   "position_hint": [
+    31.0,
+    0.0,
+    3.0
+   ]
+  },
+  {
+   "node_id": "DELIVERY_METER",
+   "asset_id": null,
+   "port_of": null,
+   "role": "junction",
+   "design_position_m": {
+    "x": 150.0,
+    "y": -70.0,
+    "z": 0.5
+   },
+   "position_hint": [
+    42.0,
+    0.0,
+    0.0
+   ]
+  },
+  {
+   "node_id": "DISTRIBUTION_BOUNDARY",
+   "asset_id": null,
+   "port_of": null,
+   "role": "junction",
+   "design_position_m": {
+    "x": 150.0,
+    "y": -170.0,
+    "z": 0.5
+   },
+   "position_hint": [
+    47.5,
+    0.0,
+    0.0
+   ]
+  }
+ ],
+ "sensors": [
+  {
+   "tag_id": "FT-001",
+   "unit": "m3/h",
+   "sampling_kind": "continuous",
+   "measured_element": {
+    "record_type": "edge_state",
+    "element_id": "E001",
+    "field": "flow_m3s"
+   },
+   "asset_id": "E001",
+   "association": "measured_variable_ref.element_id is this asset"
+  },
+  {
+   "tag_id": "FT-201",
+   "unit": "m3/h",
+   "sampling_kind": "continuous",
+   "measured_element": {
+    "record_type": "edge_state",
+    "element_id": "E-D1",
+    "field": "flow_m3s"
+   },
+   "asset_id": "E-D1",
+   "association": "measured_variable_ref.element_id is this asset"
+  },
+  {
+   "tag_id": "LSHH-101",
+   "unit": "bool",
+   "sampling_kind": "event",
+   "measured_element": {
+    "record_type": "protection_state",
+    "element_id": "LSHH-101",
+    "field": "trip_latched"
+   },
+   "asset_id": null,
+   "association": "measured element LSHH-101 (protection_state) is not an asset; no asset assigned"
+  },
+  {
+   "tag_id": "LSHH-102",
+   "unit": "bool",
+   "sampling_kind": "event",
+   "measured_element": {
+    "record_type": "protection_state",
+    "element_id": "LSHH-102",
+    "field": "trip_latched"
+   },
+   "asset_id": null,
+   "association": "measured element LSHH-102 (protection_state) is not an asset; no asset assigned"
+  },
+  {
+   "tag_id": "LSHH-103",
+   "unit": "bool",
+   "sampling_kind": "event",
+   "measured_element": {
+    "record_type": "protection_state",
+    "element_id": "LSHH-103",
+    "field": "trip_latched"
+   },
+   "asset_id": null,
+   "association": "measured element LSHH-103 (protection_state) is not an asset; no asset assigned"
+  },
+  {
+   "tag_id": "LT-101",
+   "unit": "m",
+   "sampling_kind": "continuous",
+   "measured_element": {
+    "record_type": "tank_state",
+    "element_id": "TK-101",
+    "field": "level_m"
+   },
+   "asset_id": "TK-101",
+   "association": "measured_variable_ref.element_id is this asset"
+  },
+  {
+   "tag_id": "LT-102",
+   "unit": "m",
+   "sampling_kind": "continuous",
+   "measured_element": {
+    "record_type": "tank_state",
+    "element_id": "TK-102",
+    "field": "level_m"
+   },
+   "asset_id": "TK-102",
+   "association": "measured_variable_ref.element_id is this asset"
+  },
+  {
+   "tag_id": "LT-103",
+   "unit": "m",
+   "sampling_kind": "continuous",
+   "measured_element": {
+    "record_type": "tank_state",
+    "element_id": "TK-103",
+    "field": "level_m"
+   },
+   "asset_id": "TK-103",
+   "association": "measured_variable_ref.element_id is this asset"
+  },
+  {
+   "tag_id": "P-101A",
+   "unit": "bool",
+   "sampling_kind": "event",
+   "measured_element": {
+    "record_type": "pump_state",
+    "element_id": "P-101A",
+    "field": "run_state"
+   },
+   "asset_id": "P-101A",
+   "association": "tag id equals the asset id (contact or run-state tag of that asset)"
+  },
+  {
+   "tag_id": "P-101B",
+   "unit": "bool",
+   "sampling_kind": "event",
+   "measured_element": {
+    "record_type": "pump_state",
+    "element_id": "P-101B",
+    "field": "run_state"
+   },
+   "asset_id": "P-101B",
+   "association": "tag id equals the asset id (contact or run-state tag of that asset)"
+  },
+  {
+   "tag_id": "PT-001",
+   "unit": "barg",
+   "sampling_kind": "continuous",
+   "measured_element": {
+    "record_type": "edge_state",
+    "element_id": "E002",
+    "field": "p_from_pa_abs"
+   },
+   "asset_id": "PT-001",
+   "association": "tag id equals a pressure_transmitter asset id"
+  },
+  {
+   "tag_id": "PT-201",
+   "unit": "barg",
+   "sampling_kind": "continuous",
+   "measured_element": {
+    "record_type": "node_state",
+    "element_id": "PUMP_SUCTION_TEE",
+    "field": "pressure_pa_abs"
+   },
+   "asset_id": "PT-201",
+   "association": "tag id equals a pressure_transmitter asset id"
+  },
+  {
+   "tag_id": "PT-202A",
+   "unit": "barg",
+   "sampling_kind": "continuous",
+   "measured_element": {
+    "record_type": "edge_state",
+    "element_id": "E-PA2",
+    "field": "p_from_pa_abs"
+   },
+   "asset_id": "PT-202A",
+   "association": "tag id equals a pressure_transmitter asset id"
+  },
+  {
+   "tag_id": "PT-202B",
+   "unit": "barg",
+   "sampling_kind": "continuous",
+   "measured_element": {
+    "record_type": "edge_state",
+    "element_id": "E-PB2",
+    "field": "p_from_pa_abs"
+   },
+   "asset_id": "PT-202B",
+   "association": "tag id equals a pressure_transmitter asset id"
+  },
+  {
+   "tag_id": "PT-203",
+   "unit": "barg",
+   "sampling_kind": "continuous",
+   "measured_element": {
+    "record_type": "node_state",
+    "element_id": "DISTRIBUTION_BOUNDARY",
+    "field": "pressure_pa_abs"
+   },
+   "asset_id": "PT-203",
+   "association": "tag id equals a pressure_transmitter asset id"
+  },
+  {
+   "tag_id": "TT-001",
+   "unit": "C",
+   "sampling_kind": "continuous",
+   "measured_element": {
+    "record_type": "edge_state",
+    "element_id": "E001",
+    "field": "fluid_temperature_K"
+   },
+   "asset_id": "E001",
+   "association": "measured_variable_ref.element_id is this asset"
+  },
+  {
+   "tag_id": "TT-101",
+   "unit": "C",
+   "sampling_kind": "continuous",
+   "measured_element": {
+    "record_type": "tank_state",
+    "element_id": "TK-101",
+    "field": "temperature_K"
+   },
+   "asset_id": "TK-101",
+   "association": "measured_variable_ref.element_id is this asset"
+  },
+  {
+   "tag_id": "TT-102",
+   "unit": "C",
+   "sampling_kind": "continuous",
+   "measured_element": {
+    "record_type": "tank_state",
+    "element_id": "TK-102",
+    "field": "temperature_K"
+   },
+   "asset_id": "TK-102",
+   "association": "measured_variable_ref.element_id is this asset"
+  },
+  {
+   "tag_id": "TT-103",
+   "unit": "C",
+   "sampling_kind": "continuous",
+   "measured_element": {
+    "record_type": "tank_state",
+    "element_id": "TK-103",
+    "field": "temperature_K"
+   },
+   "asset_id": "TK-103",
+   "association": "measured_variable_ref.element_id is this asset"
+  },
+  {
+   "tag_id": "XV-PAI",
+   "unit": "bool",
+   "sampling_kind": "event",
+   "measured_element": {
+    "record_type": "valve_contact_state",
+    "element_id": "XV-PAI",
+    "field": "open_contact"
+   },
+   "asset_id": "XV-PAI",
+   "association": "tag id equals the asset id (contact or run-state tag of that asset)"
+  },
+  {
+   "tag_id": "XV-PAO",
+   "unit": "bool",
+   "sampling_kind": "event",
+   "measured_element": {
+    "record_type": "valve_contact_state",
+    "element_id": "XV-PAO",
+    "field": "open_contact"
+   },
+   "asset_id": "XV-PAO",
+   "association": "tag id equals the asset id (contact or run-state tag of that asset)"
+  },
+  {
+   "tag_id": "XV-PBI",
+   "unit": "bool",
+   "sampling_kind": "event",
+   "measured_element": {
+    "record_type": "valve_contact_state",
+    "element_id": "XV-PBI",
+    "field": "open_contact"
+   },
+   "asset_id": "XV-PBI",
+   "association": "tag id equals the asset id (contact or run-state tag of that asset)"
+  },
+  {
+   "tag_id": "XV-PBO",
+   "unit": "bool",
+   "sampling_kind": "event",
+   "measured_element": {
+    "record_type": "valve_contact_state",
+    "element_id": "XV-PBO",
+    "field": "open_contact"
+   },
+   "asset_id": "XV-PBO",
+   "association": "tag id equals the asset id (contact or run-state tag of that asset)"
+  },
+  {
+   "tag_id": "XV-R000",
+   "unit": "bool",
+   "sampling_kind": "event",
+   "measured_element": {
+    "record_type": "valve_contact_state",
+    "element_id": "XV-R000",
+    "field": "open_contact"
+   },
+   "asset_id": "XV-R000",
+   "association": "tag id equals the asset id (contact or run-state tag of that asset)"
+  },
+  {
+   "tag_id": "XV-R101",
+   "unit": "bool",
+   "sampling_kind": "event",
+   "measured_element": {
+    "record_type": "valve_contact_state",
+    "element_id": "XV-R101",
+    "field": "open_contact"
+   },
+   "asset_id": "XV-R101",
+   "association": "tag id equals the asset id (contact or run-state tag of that asset)"
+  },
+  {
+   "tag_id": "XV-R102",
+   "unit": "bool",
+   "sampling_kind": "event",
+   "measured_element": {
+    "record_type": "valve_contact_state",
+    "element_id": "XV-R102",
+    "field": "open_contact"
+   },
+   "asset_id": "XV-R102",
+   "association": "tag id equals the asset id (contact or run-state tag of that asset)"
+  },
+  {
+   "tag_id": "XV-R103",
+   "unit": "bool",
+   "sampling_kind": "event",
+   "measured_element": {
+    "record_type": "valve_contact_state",
+    "element_id": "XV-R103",
+    "field": "open_contact"
+   },
+   "asset_id": "XV-R103",
+   "association": "tag id equals the asset id (contact or run-state tag of that asset)"
+  },
+  {
+   "tag_id": "XV-S101",
+   "unit": "bool",
+   "sampling_kind": "event",
+   "measured_element": {
+    "record_type": "valve_contact_state",
+    "element_id": "XV-S101",
+    "field": "open_contact"
+   },
+   "asset_id": "XV-S101",
+   "association": "tag id equals the asset id (contact or run-state tag of that asset)"
+  },
+  {
+   "tag_id": "XV-S102",
+   "unit": "bool",
+   "sampling_kind": "event",
+   "measured_element": {
+    "record_type": "valve_contact_state",
+    "element_id": "XV-S102",
+    "field": "open_contact"
+   },
+   "asset_id": "XV-S102",
+   "association": "tag id equals the asset id (contact or run-state tag of that asset)"
+  },
+  {
+   "tag_id": "XV-S103",
+   "unit": "bool",
+   "sampling_kind": "event",
+   "measured_element": {
+    "record_type": "valve_contact_state",
+    "element_id": "XV-S103",
+    "field": "open_contact"
+   },
+   "asset_id": "XV-S103",
+   "association": "tag id equals the asset id (contact or run-state tag of that asset)"
+  }
+ ],
+ "excluded": {
+  "withheld_tags": [
+   "IT-201A",
+   "IT-201B",
+   "VT-201A",
+   "VT-201B",
+   "YS-201A",
+   "YS-201B"
+  ],
+  "nonbaseline_excluded_tags": [
+   "CV-201",
+   "ZT-201",
+   "PT-101",
+   "PT-102",
+   "PT-103",
+   "AT-101",
+   "AT-102",
+   "AT-103",
+   "ZSC-PA",
+   "ZSC-PB"
+  ],
+  "nonbaseline_excluded_assets": [
+   "CV-201",
+   "ZT-201"
+  ]
+ },
+ "inspection_catalog": [
+  {
+   "action_id": "ACT-INSP-01",
+   "name": "Floating Roof Rim Seal and Deck Survey",
+   "target_kind": "tank",
+   "targets": "Tanks TK-101 to TK-103",
+   "preconditions": [
+    "Tank level above 1.8 m",
+    "Authorised permit issued by the approval"
+   ],
+   "cost_usd": 280.0,
+   "duration_min": 90.0,
+   "outputs": [
+    {
+     "name": "maximum_rim_seal_gap",
+     "unit": "mm",
+     "modelled": false,
+     "uncertainty_k2": null
+    }
+   ]
+  },
+  {
+   "action_id": "ACT-INSP-02",
+   "name": "Isolation Valve Mechanical Travel and Pressure Drop Verification",
+   "target_kind": "isolation_valve",
+   "targets": "Isolation valves XV-*",
+   "preconditions": [
+    "Pipeline flowing or pressurised at the target valve",
+    "Cold work permit issued by the approval"
+   ],
+   "cost_usd": 90.0,
+   "duration_min": 45.0,
+   "outputs": [
+    {
+     "name": "measured_differential_pressure",
+     "unit": "bar",
+     "modelled": true,
+     "uncertainty_k2": 0.01
+    },
+    {
+     "name": "stem_travel",
+     "unit": "percent",
+     "modelled": true,
+     "uncertainty_k2": 2.0
+    }
+   ]
+  },
+  {
+   "action_id": "ACT-INSP-03",
+   "name": "Pump Vibration Spectral Analysis",
+   "target_kind": "pump",
+   "targets": "Pumps P-101A and P-101B",
+   "preconditions": [
+    "Pump running under load for at least 20 min"
+   ],
+   "cost_usd": 140.0,
+   "duration_min": 60.0,
+   "outputs": [
+    {
+     "name": "overall_velocity_rms",
+     "unit": "mm/s",
+     "modelled": false,
+     "uncertainty_k2": null
+    },
+    {
+     "name": "spectral_peak_ratios",
+     "unit": "1",
+     "modelled": false,
+     "uncertainty_k2": null
+    }
+   ]
+  },
+  {
+   "action_id": "ACT-INSP-04",
+   "name": "Ultrasonic Pipeline Acoustic Leak Survey",
+   "target_kind": "pipe",
+   "targets": "Pipe edges of the topology",
+   "preconditions": [
+    "Gauge pressure above 3 bar at the target edge",
+    "Ground access issued by the approval"
+   ],
+   "cost_usd": 350.0,
+   "duration_min": 120.0,
+   "outputs": [
+    {
+     "name": "leak_detected",
+     "unit": "1",
+     "modelled": false,
+     "uncertainty_k2": null
+    },
+    {
+     "name": "leak_station_along_edge",
+     "unit": "m",
+     "modelled": false,
+     "uncertainty_k2": null
+    },
+    {
+     "name": "acoustic_level",
+     "unit": "dB",
+     "modelled": false,
+     "uncertainty_k2": null
+    },
+    {
+     "name": "wall_thickness",
+     "unit": "mm",
+     "modelled": false,
+     "uncertainty_k2": null
+    }
+   ]
+  },
+  {
+   "action_id": "ACT-INSP-05",
+   "name": "Manual Dip-Tape Sounding and Water Bottom Check",
+   "target_kind": "tank",
+   "targets": "Tanks TK-101 to TK-103",
+   "preconditions": [
+    "Gauging access issued by the approval"
+   ],
+   "cost_usd": 110.0,
+   "duration_min": 45.0,
+   "outputs": [
+    {
+     "name": "manual_innage_level",
+     "unit": "mm",
+     "modelled": true,
+     "uncertainty_k2": 1.5
+    },
+    {
+     "name": "water_bottom_cut",
+     "unit": "mm",
+     "modelled": false,
+     "uncertainty_k2": null
+    }
+   ]
+  },
+  {
+   "action_id": "ACT-INSP-06",
+   "name": "Vent and Deck Fitting Inspection",
+   "target_kind": "tank",
+   "targets": "Tanks TK-101 to TK-103",
+   "preconditions": [
+    "Tank out of receipt mode"
+   ],
+   "cost_usd": 160.0,
+   "duration_min": 60.0,
+   "outputs": [
+    {
+     "name": "seating_integrity",
+     "unit": "1",
+     "modelled": false,
+     "uncertainty_k2": null
+    },
+    {
+     "name": "cracking_pressure",
+     "unit": "bar",
+     "modelled": false,
+     "uncertainty_k2": null
+    }
+   ]
+  },
+  {
+   "action_id": "ACT-INSP-07",
+   "name": "Field Pressure Transmitter Loop Calibration",
+   "target_kind": "pressure_transmitter",
+   "targets": "Pressure transmitters PT-001, PT-201, PT-202A, PT-202B and PT-203",
+   "preconditions": [
+    "Manifold isolation permitted by the approval"
+   ],
+   "cost_usd": 120.0,
+   "duration_min": 45.0,
+   "outputs": [
+    {
+     "name": "calibration_error",
+     "unit": "percent of span",
+     "modelled": true,
+     "uncertainty_k2": 0.025
+    }
+   ]
+  }
+ ],
+ "flags": [
+  "topology_dependency fixture query_asset_ids omits PT-001, PT-201, PT-202A, PT-202B, PT-203 (assets that are not graph nodes or edges)",
+  "graph nodes that are not in the asset list (drawn as junction markers, not as assets): PIPELINE_RECEIPT_BOUNDARY, RECEIPT_METER, RECEIPT_HEADER, SUCTION_HEADER, PUMP_SUCTION_TEE, CV-PA, DISCHARGE_HEADER, CV-PB, DELIVERY_METER, DISTRIBUTION_BOUNDARY",
+  "tag LSHH-101 has no asset: it measures protection_state LSHH-101",
+  "tag LSHH-102 has no asset: it measures protection_state LSHH-102",
+  "tag LSHH-103 has no asset: it measures protection_state LSHH-103",
+  "tag ids that are also asset ids: P-101A, P-101B, PT-001, PT-201, PT-202A, PT-202B, PT-203, XV-PAI, XV-PAO, XV-PBI, XV-PBO, XV-R000, XV-R101, XV-R102, XV-R103, XV-S101, XV-S102, XV-S103"
+ ]
+}

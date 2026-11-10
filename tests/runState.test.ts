@@ -84,9 +84,10 @@ describe('mock engine', () => {
   })
 
   it('flags only the selected asset (plus affected downstream) in the fault scenario', () => {
-    const { bundle } = buildMockRun('x', 'developing_fault', { fault_location: 'pump' })
-    expect(bundle.flagged_assets.map((f) => f.asset)).toContain('pump')
-    expect(bundle.flagged_assets.map((f) => f.asset)).not.toContain('terminal')
+    const { bundle } = buildMockRun('x', 'developing_fault', { fault_location: 'P-101A' })
+    expect(bundle.flagged_assets.map((f) => f.asset)).toContain('P-101A')
+    expect(bundle.flagged_assets.map((f) => f.asset)).toContain('E-PA2')
+    expect(bundle.flagged_assets.map((f) => f.asset)).not.toContain('TK-103')
   })
 
   it('flags nothing in the quiet scenario and passes its checks by default', () => {

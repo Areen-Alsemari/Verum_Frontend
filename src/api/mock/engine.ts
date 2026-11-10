@@ -2,7 +2,8 @@ import type {
   AgentFinishedEvent, AgentStatus, AssetId, ControlValues, EvidenceVerification, ExpectedVsObserved,
   FlaggedAsset, Hypothesis, InspectionOption, Issue, RoleKey, RunBundle, RunEvent, Severity,
 } from '../types'
-import { AGENTS, SCENARIOS } from './data'
+import { AGENTS, DEFAULT_FAULT_ASSET, SCENARIOS } from './data'
+import { STATIC_FACILITY as F, assetById, downstreamPipes, firstOfKind } from '../../facility'
 
 export interface TimedEvent {
   /** milliseconds since the run started (virtual time) */
@@ -27,8 +28,36 @@ const orderOf = (r: RoleKey) => ORDER.indexOf(r) + 1
 const reportId = (r: RoleKey) => `rpt-${orderOf(r)}`
 const nameOf = (r: RoleKey) => AGENTS.find((a) => a.role_key === r)?.name ?? r
 
-const LOCATION_LABEL: Record<string, string> = {
-  pump: 'pump', valve: 'valve', pipeline: 'pipeline', sensor: 'pressure sensor',
+/** Hypothesis family per facility kind. Kinds without a family use the generic one. */
+type Category = 'pump' | 'valve' | 'pipeline' | 'sensor' | 'tank' | 'equipment'
+const CATEGORY: Record<string, Category> = {
+  pump: 'pump', isolation_valve: 'valve', pipe: 'pipeline', pressure_transmitter: 'sensor', tank: 'tank',
+}
+const CATEGORY_NOUN: Record<Category, string> = {
+  pump: 'pump', valve: 'valve', pipeline: 'pipe segment', sensor: 'pressure transmitter', tank: 'tank', equipment: 'asset',
+}
+const categoryOf = (id: string): Category => CATEGORY[assetById(F, id)?.kind ?? ''] ?? 'equipment'
+const locLabelOf = (id: string) => `${CATEGORY_NOUN[categoryOf(id)]} ${id}`
+
+/** Asset where the fault sits for each scenario (null = no fault). Ids come from the facility snapshot. */
+function faultAssetFor(scenarioId: string, c: ControlValues): string | null {
+  if (scenarioId === 'quiet_window') return null
+  if (scenarioId === 'developing_fault') return str(c, 'fault_location', DEFAULT_FAULT_ASSET)
+  return DEFAULT_FAULT_ASSET
+}
+
+/** A pressure transmitter next to the asset: on a pipe or node feeding it, else the first one. */
+function transmitterNear(id: string): string {
+  const pts = F.assets.filter((a) => a.kind === 'pressure_transmitter')
+  const into = F.assets.filter((p) => p.graph_role === 'edge' && (p.to_node === id || p.to_node?.startsWith(`${id}:`)))
+  const near = [...into.map((p) => p.asset_id), ...into.map((p) => p.from_node ?? ''), ...downstreamPipes(F, id).map((p) => p.asset_id)]
+  return pts.find((p) => near.includes(p.mounted_on?.element_id ?? ''))?.asset_id ?? pts[0]?.asset_id ?? id
+}
+
+/** The pump the asset feeds, else the first pump. */
+function pumpNear(id: string): string {
+  const next = downstreamPipes(F, id).map((p) => p.to_node).find((n) => n && assetById(F, n)?.kind === 'pump')
+  return next ?? firstOfKind(F, 'pump')?.asset_id ?? id
 }
 
 function num(c: ControlValues, k: string, d: number): number {
@@ -49,11 +78,12 @@ function planOutcomes(scenarioId: string, c: ControlValues): Record<RoleKey, Out
   const o = {} as Record<RoleKey, Outcome>
   const ok = (_role: RoleKey, report: string, duration: number): Outcome => ({ status: 'complete', issues: [], report, duration })
 
-  const faultLoc = scenarioId === 'developing_fault' ? str(c, 'fault_location', 'valve')
-    : scenarioId === 'quiet_window' ? null : 'valve'
+  const faultLoc = faultAssetFor(scenarioId, c)
   const dropRate = scenarioId === 'developing_fault' ? num(c, 'pressure_drop_rate', 12) : scenarioId === 'quiet_window' ? 0 : 14
   const hasAnomaly = faultLoc !== null && dropRate >= 3
-  const locLabel = faultLoc ? LOCATION_LABEL[faultLoc] ?? faultLoc : ''
+  const locLabel = faultLoc ? locLabelOf(faultLoc) : ''
+  const faultAsset = faultLoc ? assetById(F, faultLoc) : undefined
+  const downstream = faultLoc ? downstreamPipes(F, faultLoc).map((p) => p.asset_id) : []
 
   // 1 predictive_health
   if (scenarioId === 'quiet_window' && bool(c, 'sensor_dropout', false)) {
@@ -84,7 +114,8 @@ function planOutcomes(scenarioId: string, c: ControlValues): Record<RoleKey, Out
 
   // 3 topology_dependency
   o.topology_dependency = ok('topology_dependency',
-    hasAnomaly ? `The ${locLabel} sits on the main line between the storage tank and the terminal; downstream segments are affected.`
+    hasAnomaly
+      ? `The ${locLabel} is in the ${(faultAsset?.area ?? 'unassigned area').toLowerCase()} and connects to ${faultAsset?.connects_to.join(', ') || 'no declared element'}.${downstream.length ? ` Downstream: ${downstream.join(', ')}.` : ''}`
       : 'No dependency path needs attention.', 1000)
 
   // 4 historical_asset_intelligence
@@ -96,7 +127,7 @@ function planOutcomes(scenarioId: string, c: ControlValues): Record<RoleKey, Out
     o.historical_asset_intelligence.report = 'No history records were available to compare against.'
   } else if (scenarioId === 'agent_conflict') {
     o.historical_asset_intelligence = ok('historical_asset_intelligence',
-      'Past records for this sensor mention drift events; past records for the valve mention fouling.', 1200)
+      `Past records for ${str(c, 'disagreeing_pair', 'valve_vs_sensor') === 'valve_vs_sensor' ? transmitterNear(DEFAULT_FAULT_ASSET) : pumpNear(DEFAULT_FAULT_ASSET)} point to a different explanation than the readings near ${DEFAULT_FAULT_ASSET}.`, 1200)
   } else {
     o.historical_asset_intelligence = ok('historical_asset_intelligence',
       hasAnomaly ? `Records for the ${locLabel} include earlier maintenance entries relevant to this pattern.` : 'No relevant past events found.', 1200)
@@ -113,7 +144,7 @@ function planOutcomes(scenarioId: string, c: ControlValues): Record<RoleKey, Out
     o.diagnostic_reasoning = ok('diagnostic_reasoning', 'No fault hypothesis is supported by the evidence.', 1200)
   } else {
     o.diagnostic_reasoning = ok('diagnostic_reasoning',
-      `Leading hypothesis: ${locLabel} problem. Alternatives are still open.`, 1800)
+      `Leading hypothesis concerns the ${locLabel}. Alternatives are still open.`, 1800)
   }
 
   // 6 inspection_planning
@@ -187,7 +218,7 @@ function sevFor(rate: number): Severity {
 
 function buildBundle(runId: string, scenarioId: string, c: ControlValues, o: Record<RoleKey, Outcome>): RunBundle {
   const conflict = scenarioId === 'agent_conflict' && !bool(c, 'extra_evidence', false)
-  const faultLoc = scenarioId === 'developing_fault' ? str(c, 'fault_location', 'valve') : scenarioId === 'quiet_window' ? null : 'valve'
+  const faultLoc = faultAssetFor(scenarioId, c)
   const rate = scenarioId === 'developing_fault' ? num(c, 'pressure_drop_rate', 12) : scenarioId === 'quiet_window' ? 0 : 14
   const hasAnomaly = faultLoc !== null && rate >= 3
   const anyFailed = ORDER.some((r) => o[r].status === 'error' || o[r].status === 'rejected_by_runner')
@@ -197,13 +228,14 @@ function buildBundle(runId: string, scenarioId: string, c: ControlValues, o: Rec
   if (hasAnomaly && faultLoc) {
     const sev = sevFor(rate)
     const by = (['anomaly_detection', 'topology_dependency', 'diagnostic_reasoning'] as RoleKey[]).filter((r) => o[r].report !== null)
-    flagged.push({ asset: faultLoc as AssetId, flagged_by: by, severity: sev, note: `Pressure drop of ${rate} kPa/h reported near this asset.` })
-    if (faultLoc !== 'pipeline' && o.topology_dependency.report !== null) {
-      flagged.push({ asset: 'pipeline', flagged_by: ['topology_dependency'], severity: 'info', note: 'Downstream segment affected by the finding.' })
+    flagged.push({ asset: faultLoc, flagged_by: by, severity: sev, note: `Pressure drop of ${rate} kPa/h reported near this asset.` })
+    const down = downstreamPipes(F, faultLoc).find((p) => p.asset_id !== faultLoc)
+    if (down && categoryOf(faultLoc) !== 'pipeline' && o.topology_dependency.report !== null) {
+      flagged.push({ asset: down.asset_id, flagged_by: ['topology_dependency'], severity: 'info', note: 'Downstream segment affected by the finding.' })
     }
     if (conflict) {
       const pair = str(c, 'disagreeing_pair', 'valve_vs_sensor')
-      const other: AssetId = pair === 'valve_vs_sensor' ? 'sensor' : 'pump'
+      const other: AssetId = pair === 'valve_vs_sensor' ? transmitterNear(faultLoc) : pumpNear(faultLoc)
       if (!flagged.some((f) => f.asset === other)) {
         flagged.push({ asset: other, flagged_by: ['historical_asset_intelligence'], severity: 'info', note: 'Raised from history records only.' })
       }
@@ -220,23 +252,25 @@ function buildBundle(runId: string, scenarioId: string, c: ControlValues, o: Rec
     })
     if (conflict) {
       const second = pair === 'valve_vs_sensor'
-        ? mk('h-sensor', 'Sensor drift', 'The pressure sensor reads low without a physical pressure drop.', 'alternative',
+        ? mk('h-sensor', 'Transmitter drift', `${transmitterNear(DEFAULT_FAULT_ASSET)} reads low without a physical pressure drop.`, 'alternative',
           ['historical_asset_intelligence'], ['anomaly_detection'])
-        : mk('h-pump', 'Pump degradation', 'Reduced pump output lowers downstream pressure.', 'alternative',
+        : mk('h-pump', 'Pump degradation', `Reduced output of ${pumpNear(DEFAULT_FAULT_ASSET)} lowers downstream pressure.`, 'alternative',
           ['historical_asset_intelligence'], ['anomaly_detection'])
-      hyps.push(mk('h-valve', 'Valve obstruction', 'Increased pressure drop across the valve.', 'alternative',
+      hyps.push(mk('h-valve', 'Valve obstruction', `Increased pressure drop across ${DEFAULT_FAULT_ASSET}.`, 'alternative',
         ['anomaly_detection', 'topology_dependency'], ['historical_asset_intelligence']), second)
     } else {
       const titles: Record<string, [string, string]> = {
         pump: ['Pump degradation', 'Reduced flow and pressure increase at the pump.'],
         valve: ['Valve obstruction', 'Increased pressure drop across the valve.'],
-        pipeline: ['Pipeline leak', 'Loss of pressure and mass imbalance along the line.'],
-        sensor: ['Sensor drift', 'Incorrect measurement reading at the sensor.'],
+        pipeline: ['Pipe segment leak', 'Loss of pressure and mass imbalance along the segment.'],
+        sensor: ['Transmitter drift', 'Incorrect measurement reading at the pressure transmitter.'],
+        tank: ['Tank outlet restriction', 'Reduced outflow at the tank outlet nozzle.'],
+        equipment: ['Equipment fault', 'A fault at the selected asset.'],
       }
-      const lead = faultLoc as string
-      hyps.push(mk(`h-${lead}`, titles[lead]![0], titles[lead]![1], 'leading',
+      const lead = categoryOf(faultLoc as string)
+      hyps.push(mk(`h-${lead}`, titles[lead]![0], `${titles[lead]![1]} (${faultLoc})`, 'leading',
         ['anomaly_detection', 'predictive_health', 'topology_dependency', 'historical_asset_intelligence'], []))
-      for (const k of Object.keys(titles).filter((x) => x !== lead)) {
+      for (const k of ['pump', 'valve', 'pipeline', 'sensor'].filter((x) => x !== lead)) {
         hyps.push(mk(`h-${k}`, titles[k]![0], titles[k]![1], k === 'sensor' ? 'not_excluded' : 'alternative',
           ['topology_dependency'], ['anomaly_detection']))
       }
@@ -246,17 +280,20 @@ function buildBundle(runId: string, scenarioId: string, c: ControlValues, o: Rec
   const opts: InspectionOption[] = []
   if (o.inspection_planning.report !== null && hyps.length > 0) {
     const lead = faultLoc as AssetId
+    const cat = categoryOf(lead)
     const byLoc: Record<string, [string, string]> = {
       pump: ['Check pump flow and vibration at the bearings', 'Separates pump degradation from downstream causes.'],
-      valve: ['Measure pressure difference across the valve', 'Helps tell valve obstruction and pipeline leak apart.'],
+      valve: ['Measure pressure difference across the valve', 'Helps tell valve obstruction and a pipe leak apart.'],
       pipeline: ['Acoustic leak survey along the affected segment', 'Separates a leak from a restriction.'],
-      sensor: ['Compare the sensor against a reference gauge', 'Separates sensor drift from a real pressure change.'],
+      sensor: ['Compare the transmitter against a reference gauge', 'Separates transmitter drift from a real pressure change.'],
+      tank: ['Check the tank outlet and level against a manual sounding', 'Separates an outlet restriction from a level measurement problem.'],
+      equipment: ['Inspect the selected asset', 'Gathers direct evidence about the asset.'],
     }
-    const [t, r] = byLoc[lead] ?? byLoc.valve!
+    const [t, r] = byLoc[cat]!
     opts.push({ id: 'opt-1', title: t, rationale: r, targets: [lead], distinguishes: hyps.slice(0, 2).map((h) => h.id) })
-    if (lead !== 'sensor') {
-      opts.push({ id: 'opt-2', title: 'Compare the pressure sensor against a reference gauge', rationale: 'Rules a measurement fault in or out.',
-        targets: ['sensor'], distinguishes: hyps.filter((h) => h.id === 'h-sensor' || h.support_level === 'leading').map((h) => h.id) })
+    if (cat !== 'sensor') {
+      opts.push({ id: 'opt-2', title: `Compare ${transmitterNear(lead)} against a reference gauge`, rationale: 'Rules a measurement fault in or out.',
+        targets: [transmitterNear(lead)], distinguishes: hyps.filter((h) => h.id === 'h-sensor' || h.support_level === 'leading').map((h) => h.id) })
     }
   }
 

@@ -1,4 +1,5 @@
 import type { AgentInfo, Scenario } from '../types'
+import { STATIC_FACILITY, assetOptions, firstOfKind } from '../../facility'
 
 export const AGENTS: AgentInfo[] = [
   { role_key: 'predictive_health', name: 'Predictive Health', order: 1,
@@ -24,6 +25,10 @@ export const AGENTS: AgentInfo[] = [
 ]
 
 const AGENT_OPTIONS = AGENTS.map((a) => ({ value: a.role_key, label: `${a.order}. ${a.name}` }))
+
+/** Fault-location choices come from the facility snapshot, never from a hardcoded list. */
+const FAULT_OPTIONS = assetOptions(STATIC_FACILITY)
+export const DEFAULT_FAULT_ASSET = firstOfKind(STATIC_FACILITY, 'isolation_valve')?.asset_id ?? FAULT_OPTIONS[0]?.value ?? ''
 
 export const SCENARIOS: Scenario[] = [
   {
@@ -64,11 +69,8 @@ export const SCENARIOS: Scenario[] = [
       ],
     },
     controls: [
-      { id: 'fault_location', label: 'Fault location', type: 'select', default: 'valve',
-        options: [
-          { value: 'pump', label: 'Pump' }, { value: 'valve', label: 'Valve' },
-          { value: 'pipeline', label: 'Pipeline' }, { value: 'sensor', label: 'Sensor' },
-        ], help: 'Where the simulated fault is injected.' },
+      { id: 'fault_location', label: 'Fault location', type: 'select', default: DEFAULT_FAULT_ASSET,
+        options: FAULT_OPTIONS, help: 'Asset of the simulated terminal where the fault is injected (from the facility snapshot).' },
       { id: 'pressure_drop_rate', label: 'Pressure drop rate', type: 'slider', min: 0, max: 40, step: 1, default: 12, unit: 'kPa/h',
         help: 'Below 3 the anomaly agent sees nothing unusual.' },
       { id: 'history_available', label: 'Maintenance history available', type: 'toggle', default: true,
@@ -92,7 +94,7 @@ export const SCENARIOS: Scenario[] = [
     controls: [
       { id: 'disagreeing_pair', label: 'Disagreement', type: 'select', default: 'valve_vs_sensor',
         options: [
-          { value: 'valve_vs_sensor', label: 'Valve obstruction vs sensor drift' },
+          { value: 'valve_vs_sensor', label: 'Valve obstruction vs transmitter drift' },
           { value: 'pump_vs_valve', label: 'Pump degradation vs valve obstruction' },
         ], help: 'Which two explanations the agents split on.' },
       { id: 'extra_evidence', label: 'Add a reference reading', type: 'toggle', default: false,

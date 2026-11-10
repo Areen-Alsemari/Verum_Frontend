@@ -18,6 +18,7 @@ export function ScenarioPicker({ scenarios, selectedId, disabled, onSelect }: Pr
           return (
             <button
               key={s.id}
+              data-scenario={s.id}
               type="button"
               role="radio"
               aria-checked={selected}
