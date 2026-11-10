@@ -39,7 +39,10 @@ describe('command center', () => {
     render(cc(run))
     const btns = screen.getAllByRole('button', { name: /Topology & Dependency: Rejected by runner/ })
     expect(btns).toHaveLength(2) // workflow strip card + needs-attention item
-    for (const b of btns) expect(b).toHaveTextContent('AGENT_INVALID_RESPONSE')
+    for (const b of btns) {
+      expect(b).toHaveTextContent('Invalid response')
+      expect(b.querySelector('.issue-code.is-fail')).toHaveAttribute('title', 'AGENT_INVALID_RESPONSE')
+    }
     expect(btns[0]!.className).toContain('st-rejected')
   })
 

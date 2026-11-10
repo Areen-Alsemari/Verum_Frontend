@@ -4,6 +4,7 @@ import { formatMs } from '../lib/format'
 import { elapsedMs, topIssue, type RunState } from '../state/runState'
 import { AgentIcon } from '../components/AgentIcon'
 import { Unknown } from '../components/Unknown'
+import { label } from '../lib/labels'
 
 interface Props {
   agents: AgentInfo[]
@@ -42,14 +43,14 @@ export function WorkflowStrip({ agents, run, selected, onSelect, readings = null
                 type="button"
                 className={`strip-card st-${ui}${selected === a.role_key ? ' is-selected' : ''}`}
                 style={{ ['--st' as string]: STATE_COLOR[ui] }}
-                aria-label={`${a.order}. ${a.name}: ${STATE_LABEL[ui]}${issue ? `, issue ${issue.code}` : ''}`}
+                aria-label={`${a.order}. ${a.name}: ${STATE_LABEL[ui]}${issue ? `, issue: ${label(issue.code)}` : ''}`}
                 onClick={() => onSelect(a.role_key)}
               >
                 <span className="strip-top"><span className="agent-ico"><AgentIcon role={a.role_key} size={18} /></span><span className="agent-order">{a.order}</span></span>
                 <span className="strip-name">{a.name}</span>
                 <span className="agent-state"><span className="state-dot" aria-hidden="true" />{STATE_LABEL[ui]}</span>
                 <span className="strip-meta">{ms ?? ''}</span>
-                {issue && <span className={`issue-code${fail ? ' is-fail' : ''}`}>{issue.code}</span>}
+                {issue && <span className={`issue-code${fail ? ' is-fail' : ''}`} title={issue.code}>{label(issue.code)}</span>}
               </button>
             </li>
           )

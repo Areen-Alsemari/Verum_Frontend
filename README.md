@@ -21,7 +21,8 @@ npm run typecheck    # tsc, strict
 Hash routing (`#/command`, `#/agents`, `#/log`, `#/investigation`, `#/inspection`, `#/report`),
 no router dependency. The pill tab bar is a WAI-ARIA tablist (arrow keys, Home, End).
 
-Every tab has a compact run bar (scenario, Run, Stop, Next event while stepping). **All controls** opens the
+The Command center has the scenario switcher (title, kind and description), Run, Stop, Next event while stepping,
+and **All controls**, which opens the
 scenarios-and-controls card as a modal over the current tab: scenario list, controls generated from scenario
 data, Run / Run step by step / Next event / Run all scenarios / Stop / Reset to defaults, playback speed, and
 observed vs expected. Run actions close the card so the run can be watched; Escape or the backdrop closes it and
@@ -29,7 +30,7 @@ focus returns to the button. The old `#/scenarios` link opens the card.
 
 | Tab | Content |
 |---|---|
-| Command center | 3D facility with sensor markers; operations briefing (written from run data only); KPI row (agents complete, open issues, flagged assets, decision state); needs-attention list; agent workflow strip fed by the simulated sensor stream; human-decision panel (state only); focus view of flagged assets |
+| Command center | Scenario switcher and run buttons; 3D facility with sensor markers; operations briefing (written from run data only, shown once a run has started); KPI row (agents complete, open issues, flagged assets, decision state); needs-attention list; agent workflow strip fed by the simulated sensor stream; human-decision panel (state only); focus view of flagged assets |
 | Agents | Eight agent cards with dependency arrows, status, timing, issues, consumed reports; detail drawer |
 | Message log | Runner and agent requests, responses, attachments and issues; filters, pause scroll, expandable payloads, copy as JSON |
 | Investigation | Agent outcomes (failures red with issue code), unconfirmed hypotheses, evidence verification, report and evidence ids, focus view |
@@ -122,6 +123,16 @@ The HTTP endpoints are not verified against a running backend; the Verum checkou
   "Schematic, not to scale".
 
 Tests: `tests/honesty.test.tsx`, `tests/honesty-tabs.test.tsx`, `tests/report.test.tsx`, `tests/command.test.tsx`.
+
+## Readable wording
+
+Codes and field names from the API (`more_evidence_required`, `human_decision_required`, `AGENT_INVALID_RESPONSE`,
+`eligible_for_human_review`, role keys) are shown as plain labels through `src/lib/labels.ts`. Flags read
+Yes / No with the exact value in the tooltip; issue codes keep the raw code in the tooltip, in the agent drawer
+and in the report. A test checks that no snake_case name appears in the UI text.
+
+All dropdowns use one Verum-styled select (`src/components/Select.tsx`, WAI-ARIA combobox with a listbox:
+arrow keys, Home, End, Enter, Escape, type to jump). The top bar becomes opaque once the page scrolls.
 
 ## Glass theme
 

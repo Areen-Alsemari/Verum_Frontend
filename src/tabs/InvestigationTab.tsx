@@ -6,6 +6,7 @@ import { Block, Evidence, Hypotheses, Ids } from '../components/ResultBlocks'
 import { waitingText } from '../components/ResultView'
 import { Unknown } from '../components/Unknown'
 import type { RunState } from '../state/runState'
+import { label } from '../lib/labels'
 
 export function InvestigationTab({ run, agents, focus }: { run: RunState; agents: AgentInfo[]; focus: ReactNode }) {
   const b = run.bundle
@@ -30,10 +31,10 @@ export function InvestigationTab({ run, agents, focus }: { run: RunState; agents
                   <p className="kv"><span>report id</span> <code>{r.report_id}</code></p>
                   <p className="kv"><span>analysis id</span> {r.context?.analysis_id ? <code>{r.context.analysis_id}</code> : <Unknown what="analysis id" />}</p>
                   <table className="outcomes">
-                    <thead><tr><th>Source report</th><th>Agent</th><th>content_sha256</th></tr></thead>
+                    <thead><tr><th>Source report</th><th>Agent</th><th>Content hash (SHA-256)</th></tr></thead>
                     <tbody>
                       {r.source_reports.map((s) => (
-                        <tr key={s.report_id}><td><code>{s.report_id}</code></td><td>{s.agent}</td><td>{s.content_sha256 ? <code className="hash">{s.content_sha256}</code> : <Unknown what="hash" />}</td></tr>
+                        <tr key={s.report_id}><td><code>{s.report_id}</code></td><td>{label(s.agent)}</td><td>{s.content_sha256 ? <code className="hash">{s.content_sha256}</code> : <Unknown what="hash" />}</td></tr>
                       ))}
                     </tbody>
                   </table>

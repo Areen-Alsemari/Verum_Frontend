@@ -1,5 +1,6 @@
 import type { AgentInfo, FlaggedAsset, Severity } from '../api'
 import { STATIC_FACILITY, assetById, kindLabel } from '../facility'
+import { humanText } from '../lib/labels'
 
 const SEV_COLOR: Record<Severity, string> = { info: 'var(--blue)', warning: 'var(--yellow)', critical: 'var(--red)' }
 
@@ -22,7 +23,7 @@ export function AssetChain({ flagged, agents }: Props) {
                 <div className="mini-head"><strong><code>{f.asset}</code></strong>
                   <span className="pill">{a ? kindLabel(a.kind) : 'not in facility snapshot'}</span></div>
                 <p className="control-help">flagged by {f.flagged_by.length} agent{f.flagged_by.length === 1 ? '' : 's'}: {f.flagged_by.map(short).join(', ') || 'unknown'}</p>
-                {f.note && <p className="control-help">{f.note}</p>}
+                {f.note && <p className="control-help">{humanText(f.note)}</p>}
               </li>
             )
           })}

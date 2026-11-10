@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import type { AgentInfo, MessageKind } from '../api'
 import { formatTs } from '../lib/format'
+import { humanText } from '../lib/labels'
+import { Select } from './Select'
 import type { LoggedMessage } from '../state/runState'
 
 const KINDS: MessageKind[] = ['request', 'response', 'attachment', 'issue']
@@ -58,11 +60,8 @@ export function MessageLog({ messages, agents }: Props) {
       <div className="log-tools">
         <label className="log-field">
           <span className="sr-only">Filter by agent</span>
-          <select className="select" value={agentFilter} onChange={(e) => setAgentFilter(e.target.value)} aria-label="Filter by agent">
-            <option value="all">All agents and runner</option>
-            <option value="runner">Runner</option>
-            {agents.map((a) => <option key={a.role_key} value={a.role_key}>{a.order}. {a.name}</option>)}
-          </select>
+          <Select label="Filter by agent" hideLabel value={agentFilter} onChange={setAgentFilter}
+            options={[{ value: 'all', label: 'All agents and runner' }, { value: 'runner', label: 'Runner' }, ...agents.map((a) => ({ value: a.role_key, label: `${a.order}. ${a.name}` }))]} />
         </label>
         <div className="kind-filters" role="group" aria-label="Filter by message kind">
           {KINDS.map((k) => (
@@ -93,7 +92,7 @@ export function MessageLog({ messages, agents }: Props) {
                   <span className="log-kind">{m.kind}</span>
                   <span className="log-route">{nameOf[m.from] ?? m.from} <span aria-label="to">→</span> {nameOf[m.to] ?? m.to}</span>
                 </div>
-                <p className="log-summary">{m.summary}</p>
+                <p className="log-summary">{humanText(m.summary)}</p>
                 <button type="button" className="log-more" aria-expanded={isOpen} onClick={() => toggleOpen(m.seq)}>
                   {isOpen ? 'Hide payload' : 'Show payload'}
                 </button>

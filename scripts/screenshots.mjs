@@ -25,7 +25,7 @@ try {
       // "controls" is the All controls card over the command center, not a tab
       if (tab === 'controls') await page.getByRole('button', { name: 'All controls' }).click()
       else await page.evaluate((h) => { window.location.hash = `#/${h}` }, tab)
-      if (tab === 'report') await page.getByRole('button', { name: 'Save as PDF' }).and(page.locator(':enabled')).waitFor({ timeout: 20000 })
+      if (tab === 'report') await page.getByRole('button', { name: 'Save as PDF' }).and(page.locator(':enabled')).waitFor({ timeout: 40000 })
       await page.mouse.move(0, 0)
       await page.waitForTimeout(tab === 'command' || tab === 'investigation' ? 3500 : 900)
       const file = `screenshots/${String(n + 1).padStart(2, '0')}-${id}-${String(t + 1).padStart(2, '0')}-${tab}.png`

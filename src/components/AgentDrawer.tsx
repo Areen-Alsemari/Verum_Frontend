@@ -5,6 +5,7 @@ import { formatMs } from '../lib/format'
 import { elapsedMs, type AgentRunState } from '../state/runState'
 import { AgentIcon } from './AgentIcon'
 import { Unknown } from './Unknown'
+import { humanText, label } from '../lib/labels'
 
 interface Props {
   info: AgentInfo
@@ -37,7 +38,6 @@ export function AgentDrawer({ info, st, lastTs, agentsByKey, onClose }: Props) {
       </div>
       <p className="control-help">{info.description}</p>
       <dl className="drawer-list">
-        <dt>Role key</dt><dd><code>{info.role_key}</code></dd>
         <dt>Time</dt><dd>{(st && formatMs(elapsedMs(st, lastTs))) ?? <Unknown what="elapsed time" />}</dd>
         <dt>Reads reports from</dt>
         <dd>{(info.depends_on ?? []).length ? info.depends_on!.map((k) => agentsByKey[k]?.name ?? k).join(', ') : 'nothing (first stage)'}</dd>
@@ -45,8 +45,8 @@ export function AgentDrawer({ info, st, lastTs, agentsByKey, onClose }: Props) {
 
       <h4 className="label">Report summary</h4>
       {!finished && <p className="control-help">Not finished yet.</p>}
-      {finished && st!.report === null && <p className="null-report">No report was returned (null).</p>}
-      {finished && st!.report !== null && <p className="drawer-text">{st!.report}</p>}
+      {finished && st!.report === null && <p className="null-report">No report was returned.</p>}
+      {finished && st!.report !== null && <p className="drawer-text">{humanText(st!.report)}</p>}
 
       <h4 className="label">Flagged assets</h4>
       {!finished ? <p className="control-help">Not finished yet.</p>
@@ -59,9 +59,10 @@ export function AgentDrawer({ info, st, lastTs, agentsByKey, onClose }: Props) {
       {finished && st!.issues.length === 0 && <p className="control-help">None reported.</p>}
       {st?.issues.map((i, k) => (
         <div key={k} className={`issue${st.state === 'error' || st.state === 'rejected' ? ' is-fail' : ''}`}>
-          <code className="issue-code">{i.code}</code>
-          {i.severity && <span className="issue-sev">{i.severity}</span>}
-          {i.message && <p>{i.message}</p>}
+          <span className="issue-code">{label(i.code)}</span>
+          {i.severity && <span className="issue-sev">{label(i.severity)}</span>}
+          <span className="issue-raw">code {i.code}</span>
+          {i.message && <p>{humanText(i.message)}</p>}
         </div>
       ))}
 

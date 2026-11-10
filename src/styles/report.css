@@ -106,3 +106,5 @@
   .unknown { color: #5a544a !important; border-color: #9a9284 !important; background: repeating-linear-gradient(135deg, #e6e0d6 0 3px, transparent 3px 7px) !important; }
   .rp-decision { break-inside: avoid; page-break-inside: avoid; }
 }
+.rp-raw { font-family: var(--font-mono); font-size: 10.5px; color: var(--muted); }
+@media print { .rp-raw { color: #6a6458 !important; } }

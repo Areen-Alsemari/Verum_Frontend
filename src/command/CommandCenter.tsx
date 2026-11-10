@@ -31,9 +31,11 @@ export function CommandCenter(p: Props) {
       <div className="cc-main stack">
         <section className="stage panel" aria-label="Facility">
           <div className="stage-view">{p.stage}</div>
-          <div className="stage-overlay">
-            <Briefing lines={briefing(run, p.agents, p.scenario)} simulated={p.simulated} />
-          </div>
+          {run.status !== 'idle' && (
+            <div className="stage-overlay">
+              <Briefing lines={briefing(run, p.agents, p.scenario)} simulated={p.simulated} />
+            </div>
+          )}
         </section>
         <WorkflowStrip agents={p.agents} run={run} selected={p.selectedAgent} onSelect={p.onSelectAgent} readings={p.readings} />
         {p.focus}

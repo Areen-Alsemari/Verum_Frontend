@@ -1,6 +1,6 @@
 import type { Check, EvidenceVerification, Hypothesis, InspectionOption } from '../api'
-import { humanize } from '../lib/format'
 import { Unknown, Value } from './Unknown'
+import { humanText, label } from '../lib/labels'
 
 export function Block({ title, tag, children, className }: { title: string; tag?: string; children: React.ReactNode; className?: string }) {
   const id = `blk-${title.replace(/\W+/g, '-').toLowerCase()}`
@@ -23,8 +23,8 @@ export function Hypotheses({ hyps }: { hyps: Hypothesis[] }) {
       {hyps.map((h) => (
         <li key={h.id} className="mini-card">
           <div className="mini-head"><strong>{h.title}</strong>
-            <span className="pill">support: <Value value={h.support_level} what="support level">{humanize(String(h.support_level))}</Value></span></div>
-          <p className="control-help">{h.description}</p>
+            <span className="pill">support: <Value value={h.support_level} what="support level">{label(h.support_level)}</Value></span></div>
+          <p className="control-help">{humanText(h.description)}</p>
           <p className="kv"><span>status</span> unconfirmed</p>
           <p className="kv"><span>confidence</span> <Value value={h.confidence} what="confidence" /></p>
           <p className="kv"><span>supporting</span> <Ids ids={h.supporting_evidence_ids} /></p>
@@ -75,11 +75,11 @@ export function InspectionOptions({ options, hypTitle }: { options: InspectionOp
         <li key={o.id} className="mini-card">
           <div className="mini-head"><strong>{o.title}</strong>
             {o.recommended === true && <span className="pill">marked recommended by the API</span>}
-            {o.action_id && <code className="pill">{o.action_id}</code>}</div>
+            {o.action_id && <span className="pill" title="Inspection catalogue action">{o.action_id}</span>}</div>
           <p className="control-help">{o.rationale}</p>
           <p className="kv"><span>targets</span> {o.targets.length ? <Ids ids={o.targets} /> : <Unknown what="targets" />}</p>
           <p className="kv"><span>helps separate</span> {o.distinguishes.length ? o.distinguishes.map(hypTitle).join(', ') : <Unknown what="hypotheses" />}</p>
-          <p className="kv"><span>feasibility</span> {o.feasibility ? <code>{o.feasibility}</code> : <Unknown what="feasibility" />}</p>
+          <p className="kv"><span>feasibility</span> {o.feasibility ? <span title={o.feasibility}>{label(o.feasibility)}</span> : <Unknown what="feasibility" />}</p>
           <Preconditions checks={o.precondition_checks} />
           <CostDuration cost={o.cost_usd} duration={o.duration_min} />
         </li>
@@ -92,11 +92,11 @@ export function Evidence({ ev }: { ev: EvidenceVerification | null }) {
   if (!ev) return <p><Unknown what="evidence verification" /></p>
   return (
     <>
-      <p className="kv"><span>state</span> <Value value={ev.state} what="state">{<code>{ev.state}</code>}</Value></p>
+      <p className="kv"><span>state</span> <Value value={ev.state} what="state">{<span title={String(ev.state)}>{label(ev.state)}</span>}</Value></p>
       <p className="kv"><span>checked</span> <Ids ids={ev.checked_evidence_ids} /></p>
       <p className="kv"><span>unresolved</span></p>
       {ev.unresolved.length === 0 ? <p className="control-help">nothing listed</p>
-        : <ul className="plain">{ev.unresolved.map((u) => <li key={u}>{u}</li>)}</ul>}
+        : <ul className="plain">{ev.unresolved.map((u) => <li key={u}>{humanText(u)}</li>)}</ul>}
       <p className="kv"><span>notes</span> <Value value={ev.notes} what="notes" /></p>
     </>
   )

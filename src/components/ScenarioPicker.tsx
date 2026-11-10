@@ -1,5 +1,6 @@
 import type { Scenario } from '../api/types'
 import { KIND_COLOR, KIND_LABEL } from '../lib/format'
+import { humanText } from '../lib/labels'
 
 interface Props {
   scenarios: Scenario[]
@@ -31,9 +32,9 @@ export function ScenarioPicker({ scenarios, selectedId, disabled, onSelect }: Pr
                 <span className="scenario-title">{s.title}</span>
                 <span className="kind-badge">{KIND_LABEL[s.kind]}</span>
               </span>
-              <span className="scenario-desc">{s.description}</span>
+              <span className="scenario-desc">{humanText(s.description)}</span>
               <span className="scenario-expected">
-                <span className="label">Expected</span> {s.expected.summary}
+                <span className="label">Expected</span> {humanText(s.expected.summary)}
               </span>
             </button>
           )

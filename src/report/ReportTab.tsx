@@ -45,7 +45,7 @@ export function ReportTab({ run, agents, scenario, facility, snapshots, source, 
       <div className="report-actions glass" role="group" aria-label="Report actions">
         <button type="button" className="btn btn-primary" onClick={() => window.print()} disabled={pending}>Save as PDF</button>
         <button type="button" className="btn" onClick={download}>Download report data (JSON)</button>
-        <span className="control-help">{pending ? 'Capturing the 3D snapshot…' : 'Save as PDF opens the print dialog; choose "Save as PDF" as the destination.'}</span>
+        <span className="control-help">{pending ? (run.report === undefined ? 'Loading the report…' : 'Capturing the 3D snapshot…') : 'Save as PDF opens the print dialog; choose "Save as PDF" as the destination.'}</span>
       </div>
       <ReportCard model={model} facility={facility} />
     </div>

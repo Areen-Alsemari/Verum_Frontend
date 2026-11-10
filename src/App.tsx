@@ -169,23 +169,23 @@ export default function App() {
             selectedAgent={drawerRole} onSelectAgent={(r) => setDrawerRole((cur) => (cur === r ? null : r))} onGo={setTab} readings={run.status === 'idle' ? null : run.readingCount}
             stage={facilityView} focus={focusView()} />
         </TabPanel>
-        <TabPanel id="agents" active={tab} actions={runBar} sub="Live status of the eight agents. Select a card for its timing, issues and consumed reports.">
+        <TabPanel id="agents" active={tab} sub="Live status of the eight agents. Select a card for its timing, issues and consumed reports.">
           {runMessages}{board}
         </TabPanel>
-        <TabPanel id="log" active={tab} actions={runBar} sub="Runner and agent requests, responses, attachments and issues.">
+        <TabPanel id="log" active={tab} sub="Runner and agent requests, responses, attachments and issues.">
           <MessageLog messages={run.messages} agents={agents} />
         </TabPanel>
-        <TabPanel id="investigation" active={tab} actions={runBar} sub="Unconfirmed hypotheses, evidence and report ids, and a close-up of the flagged assets.">
+        <TabPanel id="investigation" active={tab} sub="Unconfirmed hypotheses, evidence and report ids, and a close-up of the flagged assets.">
           {runMessages}<InvestigationTab run={run} agents={agents} focus={focusView('Flagged assets, close-up')} />
         </TabPanel>
-        <TabPanel id="inspection" active={tab} actions={runBar} sub="Advisory options for an inspector to consider. A human decides.">
+        <TabPanel id="inspection" active={tab} sub="Advisory options for an inspector to consider. A human decides.">
           {runMessages}<InspectionTab run={run} />
         </TabPanel>
-        <TabPanel id="report" active={tab} actions={runBar} sub="Maintenance report built from the run data. Save it as PDF for the maintenance team.">
+        <TabPanel id="report" active={tab} sub="Maintenance report built from the run data. Save it as PDF for the maintenance team.">
           {runMessages}
           <ReportTab run={run} agents={agents} scenario={runScenario} facility={facility} source={client?.mode === 'real' ? 'api' : 'mock'}
             snapshots={Object.fromEntries(flaggedList.map((f) => [f.asset, snapshots[`${run.runId}:${f.asset}`] ?? null]))}
-            pending={!!pendingSnapshot} />
+            pending={run.report === undefined || !!pendingSnapshot} />
         </TabPanel>
       </main>
       {drawerRole && agentsByKey[drawerRole] && (

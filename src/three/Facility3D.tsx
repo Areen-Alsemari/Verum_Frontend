@@ -11,6 +11,7 @@ import { kindLabel, type Facility, type FacilityAsset } from '../facility'
 import { PIPE_Y, TANK_H, TANK_R, bounds, junctions, neighbours, nodePositions, pipeEnds, type Vec3 } from '../facility/geometry'
 import { readingDisplay, type SensorSample } from '../state/runState'
 import { COLORS, GenericBlock, Junction, PipeSegment, Pump, Tank, Transmitter, Valve, useMaterials, type Materials } from './parts'
+import { label } from '../lib/labels'
 
 export interface FlagInfo { by: string[]; severity?: string }
 
@@ -404,7 +405,7 @@ export default function Facility3D(p: Facility3DProps) {
     const r = p.readings[s.tag_id]
     const d = readingDisplay(r)
     const open = shownTag === s.tag_id
-    const meta = `unit ${s.unit} · quality ${r ? String(r.quality) : 'unknown'} · asset ${s.asset_id}`
+    const meta = `unit ${s.unit} · quality ${r ? label(String(r.quality)).toLowerCase() : 'unknown'} · asset ${s.asset_id}`
     specs.push({
       id: `t:${s.tag_id}`, pos: [at[0], at[1] + 0.45, at[2]], className: `sensor-tip${open ? ' is-open' : ''}`,
       content: <><strong>{s.tag_id}</strong><span className={`tip-val tone-${d.tone}`}>{d.text}</span>{open && <span className="tip-meta">{meta}</span>}</>,

@@ -72,17 +72,20 @@ describe('honesty rules', () => {
 
   it('displays the three decision flags exactly as given', () => {
     render(<ResultView run={finishedState('developing_fault')} agents={AGENTS} />)
-    const row = (n: string) => screen.getByText(n).parentElement!
-    expect(row('human_decision_required')).toHaveTextContent('true')
-    expect(row('automatic_action_authorized')).toHaveTextContent('false')
-    expect(row('equipment_condition_confirmed')).toHaveTextContent('false')
+    const val = (n: string) => screen.getByText(n).parentElement!.querySelector('.flag-val')!
+    expect(val('Human decision required')).toHaveTextContent('Yes')
+    expect(val('Human decision required')).toHaveAttribute('title', 'human_decision_required = true (as given)')
+    expect(val('Automatic action authorised')).toHaveTextContent('No')
+    expect(val('Automatic action authorised')).toHaveAttribute('title', 'automatic_action_authorized = false (as given)')
+    expect(val('Equipment condition confirmed')).toHaveTextContent('No')
+    expect(val('Equipment condition confirmed')).toHaveAttribute('title', 'equipment_condition_confirmed = false (as given)')
   })
 
   it('shows unknown for flags that are missing', () => {
     render(<ResultView run={initialRunState(AGENTS)} agents={AGENTS} />)
-    const row = screen.getByText('equipment_condition_confirmed').parentElement!
+    const row = screen.getByText('Equipment condition confirmed').parentElement!
     expect(row).toHaveTextContent('unknown')
-    expect(row).not.toHaveTextContent(/true|false/)
+    expect(row).not.toHaveTextContent(/true|false|Yes|No\b/)
   })
 
   it('shows an unknown decision state instead of a default', () => {
@@ -95,8 +98,9 @@ describe('honesty rules', () => {
     const { container } = render(<AgentBoard agents={AGENTS} run={run} selected={null} onSelect={() => {}} />)
     const card = screen.getByRole('button', { name: /Topology & Dependency/ })
     expect(card).toHaveTextContent('Rejected by runner')
-    expect(card).toHaveTextContent('AGENT_INVALID_RESPONSE')
-    expect(card).toHaveTextContent('report: null')
+    expect(card).toHaveTextContent('Invalid response')
+    expect(card.querySelector('.issue-code')).toHaveAttribute('title', 'AGENT_INVALID_RESPONSE')
+    expect(card).toHaveTextContent('No report')
     expect(card.className).toContain('st-rejected')
     expect(container.querySelector('.issue-code.is-fail')).not.toBeNull()
   })
@@ -106,7 +110,8 @@ describe('honesty rules', () => {
     render(<AgentBoard agents={AGENTS} run={run} selected={null} onSelect={() => {}} />)
     const card = screen.getByRole('button', { name: /Anomaly Detection/ })
     expect(card).toHaveTextContent('Error')
-    expect(card).toHaveTextContent('AGENT_ERROR')
+    expect(card).toHaveTextContent('Agent error')
+    expect(card.querySelector('.issue-code')).toHaveAttribute('title', 'AGENT_ERROR')
   })
 
   it('renders the unknown marker as hatched, labelled text', () => {

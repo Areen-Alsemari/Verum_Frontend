@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import type { RunStatus } from '../state/runState'
 
 interface Props {
@@ -15,8 +15,16 @@ const STATUS_TEXT: Record<RunStatus, string> = {
 }
 
 export function Header({ demoReason, status, children, extra }: Props) {
+  // fully opaque once content scrolls under it, so the tabs stay readable
+  const [scrolled, setScrolled] = useState(false)
+  useEffect(() => {
+    const on = () => setScrolled(window.scrollY > 4)
+    on()
+    window.addEventListener('scroll', on, { passive: true })
+    return () => window.removeEventListener('scroll', on)
+  }, [])
   return (
-    <header className="topbar">
+    <header className={`topbar${scrolled ? ' is-scrolled' : ''}`}>
       <div className="topbar-inner">
         <div className="brand">
           <img className="brand-mark" src="/brand/logo-mark.png" alt="" width={40} height={40} />

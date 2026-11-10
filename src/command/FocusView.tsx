@@ -7,6 +7,7 @@ import { hasWebGL, usePrefersReducedMotion } from '../lib/env'
 import { readingDisplay, type SensorSample } from '../state/runState'
 import { Facility3D } from '../three/lazy'
 import { Unknown } from '../components/Unknown'
+import { humanText, label } from '../lib/labels'
 
 export interface FlagEntry { asset: string; by: string[]; note?: string; severity?: string }
 
@@ -64,8 +65,8 @@ export function FocusView({ facility, flagged, readings, focusId, onFocus, agent
           <p className="control-help">{a ? `${kindLabel(a.kind)} · ${a.area ?? 'area unknown'}` : 'Not in the facility snapshot'}</p>
           <p className="kv"><span>flagged by</span> {current.by.length ? `${current.by.length} agent${current.by.length === 1 ? '' : 's'}` : <Unknown what="flagging agents" />}</p>
           {current.by.length > 0 && <ul className="plain">{current.by.map((r) => <li key={r}>{agentName(r)}</li>)}</ul>}
-          <p className="kv"><span>severity</span> {current.severity ? <code>{current.severity}</code> : <Unknown what="severity" />}</p>
-          {current.note && <p className="kv"><span>note</span> {current.note}</p>}
+          <p className="kv"><span>severity</span> {current.severity ? label(current.severity) : <Unknown what="severity" />}</p>
+          {current.note && <p className="kv"><span>note</span> {humanText(current.note)}</p>}
           <p className="kv"><span>connects to</span> {a?.connects_to.length ? <span className="chips">{a.connects_to.map((c) => <code key={c} className="chip">{c}</code>)}</span> : <Unknown what="connections" />}</p>
           <h4 className="label focus-sub">Sensors on this asset</h4>
           {tags.length === 0 ? <p className="control-help">No tag is tied to this asset in the source data.</p> : (
@@ -79,7 +80,7 @@ export function FocusView({ facility, flagged, readings, focusId, onFocus, agent
                     <tr key={t.tag_id}>
                       <td><code>{t.tag_id}</code></td>
                       <td>{d.tone === 'unknown' ? <Unknown what={t.tag_id} /> : <span className={`tip-val tone-${d.tone}`}>{d.text}</span>}</td>
-                      <td>{r ? <code>{String(r.quality)}</code> : <Unknown what="quality" />}</td>
+                      <td>{r ? label(String(r.quality)) : <Unknown what="quality" />}</td>
                     </tr>
                   )
                 })}

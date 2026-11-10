@@ -4,6 +4,7 @@ import { neighbours } from '../facility/geometry'
 import type { Facility } from '../facility'
 import { Unknown } from '../components/Unknown'
 import type { ReportModel } from './model'
+import { humanText, label, yesNo } from '../lib/labels'
 
 /** Text that comes from the API is wrapped so tests can tell UI wording from data. */
 function Api({ children }: { children: ReactNode }) {
@@ -21,6 +22,8 @@ function Section({ n, title, tag, children, className }: { n: number; title: str
 
 const U = ({ what }: { what: string }) => <Unknown what={what} />
 const Code = ({ v }: { v: string }) => <code><Api>{v}</Api></code>
+/** a code from the API shown as its readable label */
+const L = ({ v }: { v: string }) => <span title={v}><Api>{label(v)}</Api></span>
 const IdList = ({ ids }: { ids: string[] }) => ids.length ? <span className="rp-ids">{ids.map((i) => <Code key={i} v={i} />)}</span> : <span className="rp-muted">none listed</span>
 
 interface Props {
@@ -32,7 +35,7 @@ interface Props {
 export function ReportCard({ model: m, facility }: Props) {
   const h = m.header
   const f = m.decision.flags
-  const flag = (v: boolean | null) => (typeof v === 'boolean' ? <strong className="rp-flag"><Api>{String(v)}</Api></strong> : <U what="flag" />)
+  const flag = (v: boolean | null) => (typeof v === 'boolean' ? <strong className="rp-flag"><Api>{yesNo(v)}</Api></strong> : <U what="flag" />)
   return (
     <article className="report-card" aria-label="Maintenance report">
       <header className="rp-header">
@@ -53,9 +56,9 @@ export function ReportCard({ model: m, facility }: Props) {
         <div><dt>Analysis id</dt><dd>{h.analysisId ? <Code v={h.analysisId} /> : <U what="analysis id" />}</dd></div>
         <div><dt>Scenario</dt><dd>{h.scenario ? <Api>{h.scenario}</Api> : <U what="scenario" />}</dd></div>
         <div><dt>Time window</dt><dd>{h.asOfS !== null ? <>up to <Api>{h.asOfS}</Api> s of the replayed window</> : <U what="time window" />}{h.asOfUtc ? <> · <Api>{h.asOfUtc}</Api></> : null}</dd></div>
-        <div><dt>Data release</dt><dd>{h.dataRelease ? <Code v={h.dataRelease} /> : <U what="data release" />}</dd></div>
-        <div><dt>Assessment state</dt><dd>{h.assessmentState ? <Code v={h.assessmentState} /> : <U what="assessment state" />}</dd></div>
-        <div><dt>Review status</dt><dd>{h.reviewStatus ? <Code v={h.reviewStatus} /> : <U what="review status" />}</dd></div>
+        <div><dt>Data release</dt><dd>{h.dataRelease ? <L v={h.dataRelease} /> : <U what="data release" />}</dd></div>
+        <div><dt>Assessment state</dt><dd>{h.assessmentState ? <L v={h.assessmentState} /> : <U what="assessment state" />}</dd></div>
+        <div><dt>Review status</dt><dd>{h.reviewStatus ? <L v={h.reviewStatus} /> : <U what="review status" />}</dd></div>
       </dl>
 
       <Section n={1} title="Summary">
@@ -77,13 +80,13 @@ export function ReportCard({ model: m, facility }: Props) {
               <p className="rp-asset-id"><Code v={a.assetId} /></p>
               <p>{a.kind ? <Api>{a.kind}</Api> : <U what="kind" />} · {a.area ? <Api>{a.area}</Api> : <U what="area" />}</p>
               <p>Flagged by {a.flaggedBy.length} agent{a.flaggedBy.length === 1 ? '' : 's'}: <Api>{a.flaggedBy.join(', ') || 'unknown'}</Api></p>
-              <p>Severity: {a.severity ? <Code v={a.severity} /> : <U what="severity" />}</p>
-              {a.note && <p>Note: <Api>{a.note}</Api></p>}
+              <p>Severity: {a.severity ? <L v={a.severity} /> : <U what="severity" />}</p>
+              {a.note && <p>Note: <Api>{humanText(a.note)}</Api></p>}
               <table className="rp-table">
                 <thead><tr><th>Sensor</th><th>Last value</th><th>Quality</th></tr></thead>
                 <tbody>
                   {a.sensors.length === 0 ? <tr><td colSpan={3} className="rp-muted">No tag is tied to this asset in the source data.</td></tr> : a.sensors.map((s) => (
-                    <tr key={s.tag}><td><Code v={s.tag} /></td><td>{s.value === 'unknown' ? <U what={s.tag} /> : <Api>{s.value}</Api>}</td><td>{s.quality ? <Code v={s.quality} /> : <U what="quality" />}</td></tr>
+                    <tr key={s.tag}><td><Code v={s.tag} /></td><td>{s.value === 'unknown' ? <U what={s.tag} /> : <Api>{s.value}</Api>}</td><td>{s.quality ? <L v={s.quality} /> : <U what="quality" />}</td></tr>
                   ))}
                 </tbody>
               </table>
@@ -108,8 +111,8 @@ export function ReportCard({ model: m, facility }: Props) {
           <table className="rp-table">
             <thead><tr><th>Hypothesis (unconfirmed)</th><th>Support</th><th>Confidence</th><th>Supporting</th><th>Conflicting</th></tr></thead>
             <tbody>{m.hypotheses.map((x) => (
-              <tr key={x.title}><td><strong><Api>{x.title}</Api></strong><br /><span className="rp-muted"><Api>{x.description}</Api></span></td>
-                <td>{x.support ? <Code v={x.support} /> : <U what="support" />}</td>
+              <tr key={x.title}><td><strong><Api>{x.title}</Api></strong><br /><span className="rp-muted"><Api>{humanText(x.description)}</Api></span></td>
+                <td>{x.support ? <L v={x.support} /> : <U what="support" />}</td>
                 <td>{x.confidence !== null ? <Api>{x.confidence}</Api> : <U what="confidence" />}</td>
                 <td><IdList ids={x.supporting} /></td><td><IdList ids={x.conflicting} /></td></tr>
             ))}</tbody>
@@ -121,7 +124,7 @@ export function ReportCard({ model: m, facility }: Props) {
         {m.options.length === 0 ? <p className="rp-muted">No inspection options were returned.</p> : m.options.map((o, k) => (
           <div key={k} className="rp-option">
             <p><strong><Api>{o.title}</Api></strong> {o.actionId && <Code v={o.actionId} />}</p>
-            <p>Targets: <IdList ids={o.targets} /> · Feasibility: {o.feasibility ? <Code v={o.feasibility} /> : <U what="feasibility" />}</p>
+            <p>Targets: <IdList ids={o.targets} /> · Feasibility: {o.feasibility ? <L v={o.feasibility} /> : <U what="feasibility" />}</p>
             {o.preconditions === null ? <p>Preconditions: <U what="preconditions" /></p> : (
               <ul className="rp-pre">{o.preconditions.map((p) => <li key={p.description}><span className={`rp-status st-${p.status}`}>{p.status}</span> <Api>{p.description}</Api></li>)}</ul>
             )}
@@ -136,7 +139,7 @@ export function ReportCard({ model: m, facility }: Props) {
       <Section n={6} title="What is unknown or missing">
         {m.unknowns.length === 0 ? <p className="rp-muted">Nothing listed as missing by the run data.</p> : (
           <ul className="rp-unknowns">{m.unknowns.map((u, k) => (
-            <li key={k} className={`sev-${u.severity}`}>{u.code && <code className="rp-code"><Api>{u.code}</Api></code>} <Api>{u.text}</Api></li>
+            <li key={k} className={`sev-${u.severity}`}>{u.code && <strong className="rp-code"><Api>{label(u.code)}</Api></strong>} <Api>{u.text}</Api>{u.code && <span className="rp-raw"> (code {u.code})</span>}</li>
           ))}</ul>
         )}
       </Section>
@@ -144,10 +147,10 @@ export function ReportCard({ model: m, facility }: Props) {
       <Section n={7} title="Human decision" className="rp-decision">
         <p className="rp-p">The flags below are shown exactly as given. A human decides what happens next; no automatic action is authorised by this report.</p>
         <dl className="rp-flags">
-          <div><dt><code>human_decision_required</code></dt><dd>{flag(f.human_decision_required)}</dd></div>
-          <div><dt><code>automatic_action_authorized</code></dt><dd>{flag(f.automatic_action_authorized)}</dd></div>
-          <div><dt><code>equipment_condition_confirmed</code></dt><dd>{flag(f.equipment_condition_confirmed)}</dd></div>
-          <div><dt>Decision state</dt><dd>{m.decision.decisionState ? <Code v={m.decision.decisionState} /> : <U what="decision state" />}</dd></div>
+          <div><dt><Api>{label('human_decision_required')}</Api></dt><dd>{flag(f.human_decision_required)}</dd></div>
+          <div><dt><Api>{label('automatic_action_authorized')}</Api></dt><dd>{flag(f.automatic_action_authorized)}</dd></div>
+          <div><dt><Api>{label('equipment_condition_confirmed')}</Api></dt><dd>{flag(f.equipment_condition_confirmed)}</dd></div>
+          <div><dt>Decision state</dt><dd>{m.decision.decisionState ? <L v={m.decision.decisionState} /> : <U what="decision state" />}</dd></div>
         </dl>
         <div className="rp-signoff">
           <p className="rp-signoff-title">Reviewer sign-off (completed on paper; this is not a system action)</p>
@@ -160,14 +163,14 @@ export function ReportCard({ model: m, facility }: Props) {
       <Section n={8} title="Traceability appendix" className="rp-trace">
         {m.trace.reportIds.length === 0 ? <p>Source reports: <U what="source reports" /></p> : (
           <table className="rp-table">
-            <thead><tr><th>Report id</th><th>Agent</th><th>content_sha256</th></tr></thead>
+            <thead><tr><th>Report id</th><th>Agent</th><th>Content hash (SHA-256)</th></tr></thead>
             <tbody>{m.trace.reportIds.map((r) => (
               <tr key={r.id}><td><Code v={r.id} /></td><td><Api>{r.agent}</Api></td><td>{r.hash ? <code className="rp-hash"><Api>{r.hash}</Api></code> : <U what="hash" />}</td></tr>
             ))}</tbody>
           </table>
         )}
         <p>Evidence ids: <IdList ids={m.trace.evidenceIds} /></p>
-        <p>Reference snapshot sha256: {m.trace.referenceSha ? <code className="rp-hash"><Api>{m.trace.referenceSha}</Api></code> : <U what="reference snapshot hash" />}</p>
+        <p>Reference data hash (SHA-256): {m.trace.referenceSha ? <code className="rp-hash"><Api>{m.trace.referenceSha}</Api></code> : <U what="reference snapshot hash" />}</p>
       </Section>
 
       <Section n={9} title="Limitations">

@@ -1,5 +1,7 @@
 import { MOCK_SPEEDS, getMockSpeed, setMockSpeed, type ControlSpec, type ControlValue, type ControlValues, type Scenario } from '../api'
 import type { RunAllProgress } from '../state/useRunController'
+import { Select } from './Select'
+import { useState } from 'react'
 
 interface Props {
   scenario: Scenario | null
@@ -52,11 +54,20 @@ function Control({ spec, value, disabled, onChange }: { spec: ControlSpec; value
         </button>
       )}
       {spec.type === 'select' && (
-        <select id={id} className="select" disabled={disabled} value={String(shown)} onChange={(e) => onChange(e.target.value)}>
-          {(spec.options ?? []).map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-        </select>
+        <Select id={id} label={spec.label} hideLabel disabled={disabled} value={String(shown)} options={spec.options ?? []} onChange={onChange} />
       )}
       {spec.help && <p className="control-help">{spec.help}</p>}
+    </div>
+  )
+}
+
+function SpeedControl() {
+  const [speed, setSpeed] = useState(String(getMockSpeed()))
+  return (
+    <div className="control speed">
+      <Select id="mock-speed" label="Demo playback speed" value={speed}
+        options={MOCK_SPEEDS.map((s) => ({ value: String(s), label: `${s}×` }))}
+        onChange={(v) => { setSpeed(v); setMockSpeed(Number(v)) }} />
     </div>
   )
 }
@@ -73,14 +84,7 @@ export function ControlPanel(p: Props) {
       ))}
       <button type="button" className="btn btn-ghost btn-block" disabled={!canRun} onClick={p.onReset}>Reset to defaults</button>
 
-      {p.isMock && (
-        <div className="control speed">
-          <label className="control-label" htmlFor="mock-speed">Demo playback speed</label>
-          <select id="mock-speed" className="select" defaultValue={String(getMockSpeed())} onChange={(e) => setMockSpeed(Number(e.target.value))}>
-            {MOCK_SPEEDS.map((s) => <option key={s} value={s}>{s}×</option>)}
-          </select>
-        </div>
-      )}
+      {p.isMock && <SpeedControl />}
 
       <div className="run-buttons">
         <button type="button" className="btn btn-primary" disabled={!canRun} onClick={p.onRun}>Run</button>

@@ -23,13 +23,23 @@ export function SnapshotTaker({ facility, assetId, flagged, readings, onDone }: 
     const started = Date.now()
     const t = setInterval(() => {
       if (done.current) return
-      const ready = capture.current && Date.now() - started > 900
-      if (ready || Date.now() - started > 8000) {
+      const elapsed = Date.now() - started
+      // wait for the scene to settle, then capture; a failed or empty capture is retried until the time limit
+      if (capture.current && elapsed > 900) {
+        const url = capture.current()
+        if (url && url.length > 2000) {
+          done.current = true
+          clearInterval(t)
+          onDone(assetId, url)
+          return
+        }
+      }
+      if (elapsed > 20000) {
         done.current = true
         clearInterval(t)
-        onDone(assetId, capture.current ? capture.current() : null)
+        onDone(assetId, null)
       }
-    }, 150)
+    }, 250)
     return () => clearInterval(t)
   }, [assetId, onDone])
   return (

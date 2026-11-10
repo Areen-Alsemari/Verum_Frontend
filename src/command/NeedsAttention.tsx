@@ -1,5 +1,6 @@
 import type { AttentionItem } from '../lib/briefing'
 import type { TabId } from '../shell/routes'
+import { label } from '../lib/labels'
 
 export function NeedsAttention({ items, onGo, idle }: { items: AttentionItem[]; onGo: (t: TabId) => void; idle: boolean }) {
   return (
@@ -20,7 +21,7 @@ export function NeedsAttention({ items, onGo, idle }: { items: AttentionItem[]; 
                   <span className="attn-title">{it.title}</span>
                   {it.detail && <span className="control-help">{it.detail}</span>}
                 </span>
-                {it.code && <code className={`issue-code${it.tone === 'fail' ? ' is-fail' : ''}`}>{it.code}</code>}
+                {it.code && <span className={`issue-code${it.tone === 'fail' ? ' is-fail' : ''}`} title={it.code}>{label(it.code)}</span>}
               </button>
             </li>
           ))}

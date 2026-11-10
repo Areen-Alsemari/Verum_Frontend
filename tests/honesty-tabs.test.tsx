@@ -58,13 +58,13 @@ describe('honesty across all tabs', () => {
     // board + strip
     expect(container.querySelectorAll('.st-error').length).toBeGreaterThanOrEqual(2)
     // log
-    const logFail = [...container.querySelectorAll('.log-row')].filter((r) => r.textContent?.includes('AGENT_ERROR'))
+    const logFail = [...container.querySelectorAll('.log-row')].filter((r) => r.textContent?.includes('Agent error'))
     expect(logFail.length).toBeGreaterThan(0)
     expect(logFail.some((r) => r.className.includes('is-fail'))).toBe(true)
     // investigation
     const row = [...container.querySelectorAll('.outcomes tr.is-fail')].find((r) => r.textContent?.includes('Historical Asset Intelligence'))!
-    expect(row).toHaveTextContent('AGENT_ERROR')
-    expect(row).toHaveTextContent('Error')
+    expect(row).toHaveTextContent('Agent error')
+    expect(row.querySelector('.issue-code.is-fail')).toHaveAttribute('title', 'AGENT_ERROR')
     expect(row).not.toHaveTextContent('Complete')
     // report
     expect(container.querySelector('.rp-unknowns .sev-fail')).toHaveTextContent('AGENT_ERROR')
@@ -89,7 +89,7 @@ describe('honesty across all tabs', () => {
 
   it('shows the three flags exactly as given on Inspection and Command center', () => {
     render(allTabs(finished('developing_fault')))
-    for (const [k, v] of [['human_decision_required', 'true'], ['automatic_action_authorized', 'false'], ['equipment_condition_confirmed', 'false']] as const) {
+    for (const [k, v] of [['Human decision required', 'Yes'], ['Automatic action authorised', 'No'], ['Equipment condition confirmed', 'No']] as const) {
       for (const el of screen.getAllByText(k)) expect(el.closest('div')).toHaveTextContent(new RegExp(`${k}\\s*${v}`))
     }
   })
@@ -101,6 +101,22 @@ describe('honesty across all tabs', () => {
       const ui = container.cloneNode(true) as HTMLElement
       ui.querySelectorAll('[data-api]').forEach((n) => n.remove())
       expect(ui.textContent).not.toMatch(/probability/i)
+      unmount()
+    }
+  })
+})
+
+describe('readable wording', () => {
+  it('shows no raw snake_case field names or codes in the UI text (ids in code chips and the small "code" notes excepted)', () => {
+    for (const sc of SCENARIOS) {
+      const { container, unmount } = render(allTabs(finished(sc.id)))
+      const c = container.cloneNode(true) as HTMLElement
+      c.querySelectorAll('code, title, .issue-raw, .rp-raw').forEach((n) => n.remove())
+      const parts: string[] = []
+      const w = document.createTreeWalker(c, NodeFilter.SHOW_TEXT)
+      while (w.nextNode()) parts.push(w.currentNode.textContent ?? '')
+      const raw = parts.join(' ').match(/\b[a-z][a-z0-9]*_[a-z0-9_]+\b|\b[A-Z][A-Z0-9]*_[A-Z0-9_]+\b/g)
+      expect(raw).toBeNull()
       unmount()
     }
   })

@@ -4,6 +4,7 @@ import { STATE_COLOR, STATE_LABEL } from '../lib/agentState'
 import { formatMs } from '../lib/format'
 import { elapsedMs, topIssue, type AgentRunState, type RunState } from '../state/runState'
 import { AgentIcon } from './AgentIcon'
+import { label } from '../lib/labels'
 
 interface Props {
   agents: AgentInfo[]
@@ -135,7 +136,7 @@ function AgentCard({ info, st, lastTs, selected, refCb, onClick }: {
       type="button" ref={refCb} onClick={onClick}
       className={`agent-card st-${state}${selected ? ' is-selected' : ''}`}
       style={{ ['--st' as string]: STATE_COLOR[state] }}
-      aria-label={`${info.order}. ${info.name}: ${STATE_LABEL[state]}${top ? `, issue ${top.code}` : ''}. Open details.`}
+      aria-label={`${info.order}. ${info.name}: ${STATE_LABEL[state]}${top ? `, issue: ${label(top.code)}` : ''}. Open details.`}
       aria-pressed={selected}
     >
       <span className="agent-head">
@@ -147,13 +148,13 @@ function AgentCard({ info, st, lastTs, selected, refCb, onClick }: {
         <div><dt>Time</dt><dd>{elapsed ?? '—'}</dd></div>
         <div><dt>Issues</dt><dd>{finished ? st!.issues.length : '—'}</dd></div>
       </dl>
-      {top && <span className={`issue-code${failed ? ' is-fail' : ''}`}>{top.code}</span>}
+      {top && <span className={`issue-code${failed ? ' is-fail' : ''}`} title={top.code}>{label(top.code)}</span>}
       {finished && (
         <span className="agent-consumed">
           Consumed: {st!.consumed.length ? st!.consumed.join(', ') : 'none'}
         </span>
       )}
-      {state === 'rejected' || state === 'error' ? <span className="agent-null">report: null</span> : null}
+      {state === 'rejected' || state === 'error' ? <span className="agent-null">No report</span> : null}
     </button>
   )
 }

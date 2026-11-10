@@ -2,6 +2,7 @@ import type { ExpectedVsObserved, Scenario } from '../api'
 import { KIND_COLOR, KIND_LABEL } from '../lib/format'
 import type { ScenarioResult } from '../state/useRunController'
 import { Unknown, isMissing } from './Unknown'
+import { humanText } from '../lib/labels'
 
 export function Chip({ passed }: { passed: boolean | null | undefined }) {
   if (passed === true) return <span className="chip-res res-pass">pass</span>
@@ -31,15 +32,15 @@ export function ScenarioChecks({ scenarios, results, activeId }: Props) {
                 <span className="kind-badge">{KIND_LABEL[s.kind]}</span>
                 {r ? <Chip passed={overall(r.checks)} /> : <span className="chip-res res-none">not run</span>}
               </header>
-              <p className="control-help">Expected: {s.expected.summary}</p>
+              <p className="control-help">Expected: {humanText(s.expected.summary)}</p>
               {!r ? <p className="control-help"><Unknown what="observed result" /></p> : (
                 <table className="check-table">
                   <thead><tr><th scope="col">Check</th><th scope="col">Observed</th><th scope="col">Result</th></tr></thead>
                   <tbody>
                     {r.checks.map((c, i) => (
                       <tr key={i}>
-                        <td>{c.check}</td>
-                        <td>{isMissing(c.observed) ? <Unknown what="observed" /> : c.observed}</td>
+                        <td>{humanText(c.check)}</td>
+                        <td>{isMissing(c.observed) ? <Unknown what="observed" /> : humanText(c.observed)}</td>
                         <td><Chip passed={c.passed} /></td>
                       </tr>
                     ))}

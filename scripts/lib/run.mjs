@@ -4,7 +4,8 @@ export async function runScenario(page, baseUrl, id) {
   await page.getByRole('button', { name: 'All controls' }).click()
   const dlg = page.getByRole('dialog', { name: 'Scenarios and controls' })
   await dlg.locator(`[data-scenario="${id}"]`).first().click()
-  await dlg.locator('#mock-speed').selectOption('8')
+  await dlg.locator('#mock-speed').click()
+  await dlg.getByRole('option', { name: '8×' }).click()
   await dlg.getByRole('button', { name: 'Run', exact: true }).click()
   await page.getByRole('status').filter({ hasText: 'Run finished' }).first().waitFor({ timeout: 60000 })
 }

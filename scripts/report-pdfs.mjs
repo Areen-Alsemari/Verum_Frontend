@@ -25,7 +25,7 @@ try {
     page.on('pageerror', (e) => errors.push(String(e)))
     await runScenario(page, server.url, id)
     await page.evaluate(() => { window.location.hash = '#/report' })
-    await page.getByRole('button', { name: 'Save as PDF' }).and(page.locator(':enabled')).waitFor({ timeout: 20000 })
+    await page.getByRole('button', { name: 'Save as PDF' }).and(page.locator(':enabled')).waitFor({ timeout: 40000 })
     await page.waitForTimeout(500)
     const snaps = await page.locator('.report-card img[alt^="3D close-up"]').count()
     await page.emulateMedia({ media: 'print' })

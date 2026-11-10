@@ -7,6 +7,7 @@ import type { AgentInfo, Check, DecisionFlags, MaintenanceReport, RunBundle, Sce
 import { STATE_LABEL } from '../lib/agentState'
 import { assetById, kindLabel, sensorsForAsset, type Facility } from '../facility'
 import { readingDisplay, type RunState } from '../state/runState'
+import { humanText, label } from '../lib/labels'
 
 export interface ReportInput {
   run: RunState
@@ -104,7 +105,7 @@ export function buildReportModel(i: ReportInput): ReportModel {
   // ---- observations: report findings, else the flags from the bundle -------------------
   const observations = r
     ? r.findings.filter((f) => f.kind === 'observation' || f.kind === 'assessment' || f.kind === 'inspection_check')
-      .map((f) => ({ statement: f.statement, source: f.source_report_id, evidence: f.evidence_ids }))
+      .map((f) => ({ statement: humanText(f.statement), source: f.source_report_id, evidence: f.evidence_ids }))
     : flagged.flatMap((f) => f.flagged_by.map((ag) => ({ statement: `${name(ag)} flagged ${f.asset}${f.note ? `: ${f.note}` : ''}`, source: null, evidence: [] as string[] })))
 
   // ---- hypotheses (always unconfirmed) --------------------------------------------------
@@ -146,20 +147,20 @@ export function buildReportModel(i: ReportInput): ReportModel {
       unknowns.push({ text: `${a.order}. ${a.name}: ${STATE_LABEL[st.state]}${st.report === null ? ', no report' : ''}${iss.message ? `. ${iss.message}` : ''}`, code: iss.code, severity: sev })
     }
   }
-  for (const m of r?.missing_information ?? []) unknowns.push({ text: m, code: null, severity: 'info' })
+  for (const m of r?.missing_information ?? []) unknowns.push({ text: humanText(m), code: null, severity: 'info' })
   if (r === null && run.report === null) unknowns.push({ text: 'The backend did not provide a maintenance report.', code: null, severity: 'info' })
 
   // ---- summary: two or three sentences from API fields ---------------------------------
   const summary: string[] = []
   if (affected.length) {
-    summary.push(`Agents flagged ${affected.map((a) => `${a.assetId}${a.kind ? ` (${a.kind.toLowerCase()})` : ''}`).join(', ')} in scenario ${scenario?.title ?? run.scenarioId ?? 'unknown'}. Condition is unconfirmed.`)
+    summary.push(`Agents flagged ${affected.map((a) => `${a.assetId}${a.kind ? ` (${a.kind.toLowerCase()})` : ''}`).join(', ')} in scenario ${scenario?.title ?? (run.scenarioId ? label(run.scenarioId) : 'unknown')}. Condition is unconfirmed.`)
   } else if (b) {
-    summary.push(`No asset was flagged by any agent in scenario ${scenario?.title ?? run.scenarioId ?? 'unknown'}.`)
+    summary.push(`No asset was flagged by any agent in scenario ${scenario?.title ?? (run.scenarioId ? label(run.scenarioId) : 'unknown')}.`)
   }
   const narrative = r?.narrative?.text ?? b?.report_summary ?? null
-  if (narrative) summary.push(narrative)
+  if (narrative) summary.push(humanText(narrative))
   const ds = b?.final_decision_state ?? run.finalDecisionState ?? null
-  summary.push(`Decision state: ${ds ?? 'unknown'}; assessment state: ${r?.assessment_state ?? 'unknown'}. A human decides what happens next.`)
+  summary.push(`Decision state: ${ds ? label(ds) : 'unknown'}; assessment state: ${r?.assessment_state ? label(r.assessment_state) : 'unknown'}. A human decides what happens next.`)
 
   const evidenceIds = [...new Set([
     ...(r?.findings.flatMap((f) => f.evidence_ids) ?? []),
@@ -172,7 +173,7 @@ export function buildReportModel(i: ReportInput): ReportModel {
     header: {
       reportId: r?.report_id ?? null,
       analysisId: r?.context?.analysis_id ?? null,
-      scenario: scenario?.title ?? run.scenarioId ?? null,
+      scenario: scenario?.title ?? (run.scenarioId ? label(run.scenarioId) : null),
       asOfS: typeof r?.context?.as_of_s === 'number' ? r.context.as_of_s : null,
       asOfUtc: r?.context?.as_of_utc ?? null,
       dataRelease: r?.context?.data_release ?? null,

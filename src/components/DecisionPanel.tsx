@@ -1,6 +1,6 @@
 import type { DecisionFlags } from '../api'
-import { humanize } from '../lib/format'
 import { Unknown, isMissing } from './Unknown'
+import { label, yesNo } from '../lib/labels'
 
 export const ROLES = [
   { icon: 'operator', name: 'Operator', text: 'Starts runs and watches the pipeline.' },
@@ -13,8 +13,8 @@ export const ROLES = [
 export function FlagValue({ name, value }: { name: string; value: boolean | null | undefined }) {
   return (
     <div className="flag-row">
-      <code>{name}</code>
-      <strong className={`flag-val flag-${String(value)}`}>{typeof value === 'boolean' ? String(value) : <Unknown what={name} />}</strong>
+      <span className="flag-name" title={name}>{label(name)}</span>
+      <strong className={`flag-val flag-${String(value)}`} title={typeof value === 'boolean' ? `${name} = ${String(value)} (as given)` : undefined}>{typeof value === 'boolean' ? yesNo(value) : <Unknown what={label(name)} />}</strong>
     </div>
   )
 }
@@ -37,11 +37,11 @@ export function DecisionPanel({ decision, verified, flags, roles = true, compact
           <p className="decision-title">A human decides what happens next.</p>
           <div className="decision-state">
             <span className="label">Decision state</span>
-            <strong>{isMissing(decision) ? <Unknown what="decision state" /> : <><code>{decision}</code> <span className="control-help">({humanize(String(decision))})</span></>}</strong>
+            <strong>{isMissing(decision) ? <Unknown what="decision state" /> : <span title={String(decision)}>{label(String(decision))}</span>}</strong>
           </div>
           <div className="decision-state">
             <span className="label">Verified</span>
-            <strong>{typeof verified === 'boolean' ? String(verified) : <Unknown what="verified" />}</strong>
+            <strong>{typeof verified === 'boolean' ? yesNo(verified) : <Unknown what="verified" />}</strong>
           </div>
           <FlagValue name="human_decision_required" value={flags?.human_decision_required} />
           <FlagValue name="automatic_action_authorized" value={flags?.automatic_action_authorized} />
