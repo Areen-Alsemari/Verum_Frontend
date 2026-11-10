@@ -193,9 +193,9 @@
 @media (max-width: 1300px) { .cc { grid-template-columns: minmax(0, 1fr); } }
 .stage { position: relative; padding: 0; overflow: hidden; min-height: 560px; border-radius: var(--radius-xl); }
 .stage-view { position: absolute; inset: 0; }
-.stage-overlay { position: absolute; left: 18px; top: 18px; bottom: 18px; width: 340px; display: flex; flex-direction: column; gap: 12px; pointer-events: none; }
+.stage-overlay { position: absolute; z-index: 3; left: 18px; top: 18px; bottom: 18px; width: 340px; display: flex; flex-direction: column; gap: 12px; pointer-events: none; }
 .stage-overlay > * { pointer-events: auto; }
-.briefing { padding: 16px 18px; border-radius: var(--radius-lg); background: rgba(14,13,11,0.78); }
+.briefing { padding: 16px 18px; border-radius: var(--radius-lg); background: rgba(14,13,11,0.93) !important; position: relative; z-index: 3; }
 .briefing-title { display: flex; align-items: center; gap: 10px; font-size: 15px; font-weight: 600; margin-bottom: 10px; }
 .briefing-ico { width: 22px; height: 22px; border-radius: 7px; background: radial-gradient(circle at 35% 35%, var(--amber-hi), #6d4b22); box-shadow: 0 0 12px -2px var(--amber-glow); }
 .briefing-text { display: flex; flex-direction: column; gap: 6px; font-size: 14px; line-height: 1.5; }
@@ -335,3 +335,22 @@
 .label-layer { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
 .label-layer > * { position: absolute; left: 0; top: 0; transform-origin: 0 0; will-change: transform; }
 .scene-label { transform: none; }
+
+/* ---------- focus view ---------- */
+.focus-chips { gap: 6px; }
+.chip-btn { background: transparent; cursor: pointer; }
+.chip-btn.is-on { background: var(--amber-hi); color: #17110a; border-color: var(--amber-hi); }
+.focus-body { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 16px; }
+.focus-canvas { position: relative; height: 380px; border-radius: var(--radius); overflow: hidden; background: #0a0908; border: 1px solid var(--glass-border); }
+.focus-2d { position: absolute; inset: 0; }
+.focus-2d .facility-2d svg { padding: 20px; }
+.focus-2d .facility-2d figcaption { left: 14px; }
+.focus-note { position: absolute; left: 12px; top: 10px; font-size: 11px; color: var(--muted); background: rgba(12,11,9,0.8); padding: 2px 8px; border-radius: 999px; border: 1px solid var(--glass-border); }
+.focus-info { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.focus-id code { font-size: 20px; color: var(--amber-hi); }
+.focus-sub { margin-top: 10px; }
+.sensor-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+.sensor-table th { text-align: left; color: var(--muted); font-weight: 500; font-size: 11.5px; padding: 3px 4px; border-bottom: 1px solid var(--glass-border); }
+.sensor-table td { padding: 4px; border-bottom: 1px solid var(--glass-border); }
+.snapshot-stage { position: fixed; left: -12000px; top: 0; width: 1200px; height: 675px; pointer-events: none; }
+@media (max-width: 1500px) { .focus-body { grid-template-columns: minmax(0, 1fr); } }

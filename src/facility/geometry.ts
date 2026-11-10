@@ -46,13 +46,22 @@ export function junctions(f: Facility): { id: string; pos: Vec3 }[] {
   return (f.nodes ?? []).filter((n) => n.role === 'junction' && pos.has(n.node_id)).map((n) => ({ id: n.node_id, pos: pos.get(n.node_id)! }))
 }
 
-/** Assets one hop away (for the focus close-up). */
+/** The asset, its connections, and the equipment at the far end of its pipes (for the focus close-up). */
 export function neighbours(f: Facility, id: string): Set<string> {
   const out = new Set<string>([id])
-  const a = f.assets.find((x) => x.asset_id === id)
-  for (const c of a?.connects_to ?? []) out.add(c)
-  for (const x of f.assets) if (x.connects_to.includes(id)) out.add(x.asset_id)
-  if (a?.mounted_on?.element_id) out.add(a.mounted_on.element_id)
+  const byId = new Map(f.assets.map((a) => [a.asset_id, a]))
+  const a = byId.get(id)
+  const add1 = (x: string) => out.add(x)
+  for (const c of a?.connects_to ?? []) add1(c)
+  for (const x of f.assets) if (x.connects_to.includes(id)) add1(x.asset_id)
+  if (a?.mounted_on?.element_id) add1(a.mounted_on.element_id)
+  // second hop along pipes: what the touching pipes lead to
+  for (const x of [...out]) {
+    const p = byId.get(x)
+    if (p?.kind === 'pipe') for (const c of p.connects_to) add1(c)
+  }
+  // transmitters mounted on anything already in view
+  for (const x of f.assets) if (x.mounted_on?.element_id && out.has(x.mounted_on.element_id)) add1(x.asset_id)
   return out
 }
 

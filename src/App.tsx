@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { resolveApi, type AgentInfo, type ApiClient, type Scenario } from './api'
 import { Header } from './components/Header'
 import { ScenarioPicker } from './components/ScenarioPicker'
@@ -15,7 +15,9 @@ import { TABS, useHashRoute, type TabId } from './shell/routes'
 import { CommandCenter } from './command/CommandCenter'
 import { FacilityView } from './facility/FacilityView'
 import { flaggedAssets } from './state/runState'
-import { usePref } from './lib/env'
+import { hasWebGL, usePref } from './lib/env'
+import { FocusView } from './command/FocusView'
+import { SnapshotTaker } from './three/SnapshotTaker'
 import { RunBar } from './components/RunBar'
 import { STATIC_FACILITY, facilityFromDto, snapshotMismatch, unknownIds, type Facility } from './facility'
 
@@ -43,6 +45,8 @@ export default function App() {
   const [tab, setTab] = useHashRoute()
   const [facility, setFacility] = useState<Facility>(STATIC_FACILITY)
   const [selectedAsset, setSelectedAsset] = useState<string | null>(null)
+  const [focusFlag, setFocusFlag] = useState<string | null>(null)
+  const [snapshots, setSnapshots] = useState<Record<string, string | null>>({})
   const [twoD, setTwoD] = usePref('view2d', false)
   const [lowDetail, setLowDetail] = usePref('lowDetail', false)
 
@@ -72,6 +76,27 @@ export default function App() {
   const agentsByKey = Object.fromEntries(agents.map((a) => [a.role_key, a]))
   const ctl = useRunController(client, agents, scenarios)
   const run = ctl.state
+  // when an agent flags an asset, ease the main camera to it (first newly flagged id wins)
+  const seenFlags = useRef<{ runId: string | null; ids: string[] }>({ runId: null, ids: [] })
+  const flagIds = (run.bundle?.flagged_assets.map((f) => f.asset) ?? run.flaggedAssetIds ?? []).join('|')
+  useEffect(() => {
+    const ids = flagIds ? flagIds.split('|') : []
+    const seen = seenFlags.current
+    if (seen.runId !== run.runId) {
+      seenFlags.current = { runId: run.runId, ids: [] }
+      setFocusFlag(null)
+      setSelectedAsset(null)
+    }
+    const fresh = ids.filter((i) => !seenFlags.current.ids.includes(i))
+    if (fresh.length) {
+      seenFlags.current.ids = [...seenFlags.current.ids, ...fresh]
+      setFocusFlag((cur) => cur ?? fresh[0]!)
+      setSelectedAsset(null)
+    }
+  }, [flagIds, run.runId])
+  const onSnapshot = useCallback((asset: string, url: string | null) => {
+    setSnapshots((s) => ({ ...s, [`${ctl.state.runId}:${asset}`]: url }))
+  }, [ctl.state.runId])
   const running = run.status === 'running'
   const scenario = scenarios.find((s) => s.id === selectedId) ?? null
   const values: ControlValues = scenario ? { ...defaultControls(scenario), ...controlValues[scenario.id] } : {}
@@ -101,12 +126,21 @@ export default function App() {
       Facility mismatch · {mismatch.length}
     </span>
   )
-  const flaggedMap = new Map(flaggedAssets(run).map((f) => [f.asset, { by: f.by as string[], severity: f.severity }]))
+  const flaggedList = flaggedAssets(run).map((f) => ({ ...f, by: f.by as string[] }))
+  const flaggedMap = new Map(flaggedList.map((f) => [f.asset, { by: f.by, severity: f.severity }]))
   const agentName = (r: string) => agentsByKey[r]?.name ?? r
+  const cameraFocus = selectedAsset ?? focusFlag
   const facilityView = (
     <FacilityView facility={facility} flagged={flaggedMap} readings={run.sensors} selectedId={selectedAsset} onSelect={setSelectedAsset}
-      focusId={selectedAsset} twoD={twoD} onTwoD={setTwoD} lowDetail={lowDetail} onLowDetail={setLowDetail} agentName={agentName} />
+      focusId={cameraFocus} twoD={twoD} onTwoD={setTwoD} lowDetail={lowDetail} onLowDetail={setLowDetail} agentName={agentName} />
   )
+  const focusView = (title?: string) => flaggedList.length > 0 && (
+    <FocusView facility={facility} flagged={flaggedList} readings={run.sensors} focusId={focusFlag} title={title}
+      onFocus={(id) => { setFocusFlag(id); setSelectedAsset(null) }} agentName={agentName} twoD={twoD} lowDetail={lowDetail} />
+  )
+  // report snapshots: one per flagged asset, rendered off-screen once the report has arrived
+  const pendingSnapshot = run.report !== undefined && run.runId && hasWebGL()
+    ? flaggedList.find((f) => !(`${run.runId}:${f.asset}` in snapshots))?.asset ?? null : null
   const failedAgents = Object.values(run.agents).filter((a) => a.state === 'error' || a.state === 'rejected').length
   const badges: Partial<Record<TabId, { text: string; tone?: 'fail' | 'warn' | 'info' }>> = {}
   if (failedAgents) badges.agents = { text: String(failedAgents), tone: 'fail' }
@@ -124,7 +158,7 @@ export default function App() {
           {runMessages}
           <CommandCenter agents={agents} run={run} scenario={scenario ?? undefined} simulated={client?.mode === 'mock'}
             selectedAgent={drawerRole} onSelectAgent={(r) => setDrawerRole((cur) => (cur === r ? null : r))} onGo={setTab} readings={run.status === 'idle' ? null : run.readingCount}
-            stage={facilityView} />
+            stage={facilityView} focus={focusView()} />
         </TabPanel>
         <TabPanel id="scenarios" active={tab}>
           {runMessages}
@@ -154,6 +188,9 @@ export default function App() {
       </main>
       {drawerRole && agentsByKey[drawerRole] && (
         <AgentDrawer info={agentsByKey[drawerRole]!} st={run.agents[drawerRole]} lastTs={run.lastTs} agentsByKey={agentsByKey} onClose={() => setDrawerRole(null)} />
+      )}
+      {pendingSnapshot && (
+        <SnapshotTaker key={`${run.runId}:${pendingSnapshot}`} facility={facility} assetId={pendingSnapshot} flagged={flaggedMap} readings={run.sensors} onDone={onSnapshot} />
       )}
       <footer className="honesty-bar" role="note">
         <strong>Advisory only.</strong> A human decides. No automatic action is authorised.

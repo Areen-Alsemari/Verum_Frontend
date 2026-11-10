@@ -1,4 +1,5 @@
-import { Component, Suspense, lazy, useMemo, useState, type ReactNode } from 'react'
+import { Component, Suspense, useMemo, useState, type ReactNode } from 'react'
+import { Facility3D } from '../three/lazy'
 import type { SensorSample } from '../state/runState'
 import { hasWebGL, usePrefersReducedMotion } from '../lib/env'
 import { Facility2D } from './Facility2D'
@@ -6,9 +7,8 @@ import { FacilityLegend } from './FacilityLegend'
 import { AssetListPanel, FacilitySearch } from './FacilityPanels'
 import type { Facility } from './index'
 
-const Facility3D = lazy(() => import('../three/Facility3D'))
 
-class Boundary extends Component<{ fallback: ReactNode; children: ReactNode }, { failed: boolean }> {
+export class Boundary extends Component<{ fallback: ReactNode; children: ReactNode }, { failed: boolean }> {
   state = { failed: false }
   static getDerivedStateFromError() { return { failed: true } }
   render() { return this.state.failed ? this.props.fallback : this.props.children }
