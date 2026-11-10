@@ -352,7 +352,7 @@
 .sensor-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
 .sensor-table th { text-align: left; color: var(--muted); font-weight: 500; font-size: 11.5px; padding: 3px 4px; border-bottom: 1px solid var(--glass-border); }
 .sensor-table td { padding: 4px; border-bottom: 1px solid var(--glass-border); }
-.snapshot-stage { position: fixed; left: -12000px; top: 0; width: 1200px; height: 675px; pointer-events: none; }
+.snapshot-stage { position: fixed; left: -12000px; top: 0; width: 1120px; height: 630px; pointer-events: none; }
 @media (max-width: 1500px) { .focus-body { grid-template-columns: minmax(0, 1fr); } }
 .kv-block { flex-direction: column; align-items: flex-start; }
 .pre-list { list-style: none; margin: 4px 0 0; padding: 0; display: flex; flex-direction: column; gap: 4px; font-size: 13px; }

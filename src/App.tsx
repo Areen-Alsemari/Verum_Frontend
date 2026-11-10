@@ -6,6 +6,7 @@ import { AgentBoard } from './components/AgentBoard'
 import { AgentDrawer } from './components/AgentDrawer'
 import { InvestigationTab } from './tabs/InvestigationTab'
 import { InspectionTab } from './tabs/InspectionTab'
+import { ReportTab } from './report/ReportTab'
 import { ScenarioChecks } from './components/ScenarioChecks'
 import { MessageLog } from './components/MessageLog'
 import { ControlPanel } from './components/ControlPanel'
@@ -100,6 +101,8 @@ export default function App() {
   }, [ctl.state.runId])
   const running = run.status === 'running'
   const scenario = scenarios.find((s) => s.id === selectedId) ?? null
+  /** the scenario of the current run (may differ from the selected one) */
+  const runScenario = scenarios.find((s) => s.id === run.scenarioId)
   const values: ControlValues = scenario ? { ...defaultControls(scenario), ...controlValues[scenario.id] } : {}
   const setValue = (id: string, v: ControlValue) =>
     scenario && setControlValues((c) => ({ ...c, [scenario.id]: { ...values, [id]: v } }))
@@ -157,7 +160,7 @@ export default function App() {
       <main>
         <TabPanel id="command" active={tab} actions={runBar} sub="Simulated gasoline terminal. Simulated stream (replay of recorded windows), not live plant data.">
           {runMessages}
-          <CommandCenter agents={agents} run={run} scenario={scenario ?? undefined} simulated={client?.mode === 'mock'}
+          <CommandCenter agents={agents} run={run} scenario={runScenario} simulated={client?.mode === 'mock'}
             selectedAgent={drawerRole} onSelectAgent={(r) => setDrawerRole((cur) => (cur === r ? null : r))} onGo={setTab} readings={run.status === 'idle' ? null : run.readingCount}
             stage={facilityView} focus={focusView()} />
         </TabPanel>
@@ -193,7 +196,12 @@ export default function App() {
         <TabPanel id="inspection" active={tab} actions={runBar} sub="Advisory options for an inspector to consider. A human decides.">
           {runMessages}<InspectionTab run={run} />
         </TabPanel>
-        <TabPanel id="report" active={tab} actions={runBar}>{runMessages}<p className="state-msg">The report card is built in the next step.</p></TabPanel>
+        <TabPanel id="report" active={tab} actions={runBar} sub="Maintenance report built from the run data. Save it as PDF for the maintenance team.">
+          {runMessages}
+          <ReportTab run={run} agents={agents} scenario={runScenario} facility={facility} source={client?.mode === 'real' ? 'api' : 'mock'}
+            snapshots={Object.fromEntries(flaggedList.map((f) => [f.asset, snapshots[`${run.runId}:${f.asset}`] ?? null]))}
+            pending={!!pendingSnapshot} />
+        </TabPanel>
       </main>
       {drawerRole && agentsByKey[drawerRole] && (
         <AgentDrawer info={agentsByKey[drawerRole]!} st={run.agents[drawerRole]} lastTs={run.lastTs} agentsByKey={agentsByKey} onClose={() => setDrawerRole(null)} />

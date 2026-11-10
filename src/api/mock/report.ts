@@ -37,7 +37,7 @@ export function buildMockReport(runId: string, run: MockRun): MaintenanceReport 
   }
   for (const r of roles) {
     for (const i of o[r].issues.filter((x) => x.code === 'EVIDENCE_CONFLICT')) {
-      findings.push({ finding_id: `conflict-${r}`, kind: 'assessment', statement: `Evidence conflict: ${i.message ?? i.code}; outcome=unresolved`,
+      findings.push({ finding_id: `conflict-${r}`, kind: 'assessment', statement: `Evidence conflict: ${(i.message ?? i.code).replace(/\.$/, '')}; outcome=unresolved`,
         measurement: null, source_report_id: reportId(r), evidence_ids: [] })
     }
   }

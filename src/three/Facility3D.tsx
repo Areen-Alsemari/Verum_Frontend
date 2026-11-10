@@ -171,16 +171,20 @@ function Capture({ captureRef, labelEls }: { captureRef?: MutableRefObject<(() =
           if (el.style.visibility === 'hidden') continue
           const r = el.getBoundingClientRect()
           if (r.width === 0) continue
-          const x = (r.left - box.left) * k, y = (r.top - box.top) * k, w = r.width * k, h = r.height * k
+          // labels are drawn larger than on screen so they stay legible in a printed snapshot
+          const S = 1.7
+          const cx = (r.left - box.left + r.width / 2) * k, cy = (r.top - box.top + r.height / 2) * k
+          const w = r.width * k * S, h = r.height * k * S
+          const x = Math.max(2, Math.min(out.width - w - 2, cx - w / 2)), y = Math.max(2, Math.min(out.height - h - 2, cy - h / 2))
           ctx.fillStyle = 'rgba(12,11,9,0.88)'
           ctx.strokeStyle = el.classList.contains('is-flag') ? '#d6a45a' : 'rgba(243,236,224,0.35)'
-          ctx.lineWidth = 1.5 * k
-          ctx.beginPath(); ctx.roundRect(x, y, w, h, 6 * k); ctx.fill(); ctx.stroke()
+          ctx.lineWidth = 1.5 * k * S
+          ctx.beginPath(); ctx.roundRect(x, y, w, h, 6 * k * S); ctx.fill(); ctx.stroke()
           const lines = (el.dataset.text ?? el.textContent ?? '').split('\n')
           lines.forEach((ln, i) => {
-            ctx.font = `${i === 0 ? 600 : 400} ${11 * k}px ui-monospace, Menlo, monospace`
+            ctx.font = `${i === 0 ? 600 : 400} ${(i === 0 ? 11 : 9.5) * k * S}px ui-monospace, Menlo, monospace`
             ctx.fillStyle = i === 0 ? (el.classList.contains('is-flag') ? '#d6a45a' : '#f3ece0') : '#a8a193'
-            ctx.fillText(ln, x + 7 * k, y + h * ((i + 0.5) / lines.length))
+            ctx.fillText(ln, x + 7 * k * S, y + h * ((i + 0.5) / lines.length), w - 12 * k * S)
           })
         }
         return out.toDataURL('image/png')
