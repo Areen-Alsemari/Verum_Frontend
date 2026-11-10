@@ -1,57 +1,43 @@
-// Takes one screenshot per scenario in mock mode at 1920x1080 (full page).
+// Captures every tab for every mock scenario at 1920x1080 into screenshots/NN-<scenario>-TT-<tab>.png.
 // Usage: npm run screenshots            (needs Google Chrome; set CHROME_PATH to override)
-import { spawn } from 'node:child_process'
+// Starts its own mock-mode dev server on port 5195.
 import { mkdirSync } from 'node:fs'
 import { chromium } from 'playwright-core'
+import { startMockServer } from './lib/devserver.mjs'
 
-const PORT = 5199
 const CHROME = process.env.CHROME_PATH || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'
-const SCENARIOS = [
-  ['quiet_window', 'Quiet window'],
-  ['developing_fault', 'Developing fault'],
-  ['agent_conflict', 'Conflicting agents'],
-  ['agent_failure', 'Agent failure'],
-]
+const SCENARIOS = ['quiet_window', 'developing_fault', 'agent_conflict', 'agent_failure']
+const TABS = ['command', 'scenarios', 'agents', 'log', 'investigation', 'inspection', 'report']
 mkdirSync('screenshots', { recursive: true })
 
-const server = spawn('npx', ['vite', '--port', String(PORT), '--strictPort'], {
-  env: { ...process.env, VITE_API_MODE: 'mock' },
-  stdio: 'ignore',
-})
-const stop = () => server.kill()
-process.on('exit', stop)
-
-async function waitUp() {
-  for (let i = 0; i < 60; i++) {
-    try { if ((await fetch(`http://localhost:${PORT}/`)).ok) return } catch { /* not up yet */ }
-    await new Promise((r) => setTimeout(r, 500))
-  }
-  throw new Error('dev server did not start')
-}
-
+const server = await startMockServer(5195)
+const browser = await chromium.launch({ executablePath: CHROME, headless: true, args: ['--enable-gpu', '--ignore-gpu-blocklist'] })
+let failed = false
 try {
-  await waitUp()
-  const browser = await chromium.launch({ executablePath: CHROME, headless: true })
-  const page = await browser.newPage({ viewport: { width: 1920, height: 1080 } })
-  let n = 1
-  for (const [id, title] of SCENARIOS) {
-    await page.setViewportSize({ width: 1920, height: 1080 })
-    await page.goto(`http://localhost:${PORT}/`)
-    await page.getByRole('radio', { name: new RegExp(title) }).click()
+  for (const [n, id] of SCENARIOS.entries()) {
+    const page = await browser.newPage({ viewport: { width: 1920, height: 1080 } })
+    const errors = []
+    page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()) })
+    page.on('pageerror', (e) => errors.push(String(e)))
+    await page.goto(`${server.url}/#/scenarios`)
+    await page.locator(`[data-scenario="${id}"]`).first().click()
     await page.selectOption('#mock-speed', '8')
     await page.getByRole('button', { name: 'Run', exact: true }).click()
-    await page.getByRole('status').filter({ hasText: 'Run finished' }).waitFor({ timeout: 60000 })
-    await page.waitForTimeout(800)
-    // grow the viewport to the page height so the fixed footer sits at the bottom of the shot
-    const h = await page.evaluate(() => document.documentElement.scrollHeight)
-    await page.setViewportSize({ width: 1920, height: Math.max(1080, h) })
-    await page.waitForTimeout(300)
-    const file = `screenshots/${String(n).padStart(2, '0')}-${id}.png`
-    await page.screenshot({ path: file, fullPage: false })
-    console.log('wrote', file)
-    n += 1
+    await page.getByRole('status').filter({ hasText: 'Run finished' }).first().waitFor({ timeout: 60000 })
+    for (const [t, tab] of TABS.entries()) {
+      await page.evaluate((h) => { window.location.hash = `#/${h}` }, tab)
+      if (tab === 'report') await page.getByRole('button', { name: 'Save as PDF' }).and(page.locator(':enabled')).waitFor({ timeout: 20000 })
+      await page.mouse.move(0, 0)
+      await page.waitForTimeout(tab === 'command' || tab === 'investigation' ? 3500 : 900)
+      const file = `screenshots/${String(n + 1).padStart(2, '0')}-${id}-${String(t + 1).padStart(2, '0')}-${tab}.png`
+      await page.screenshot({ path: file })
+      console.log('wrote', file)
+    }
+    if (errors.length) { failed = true; console.error(`console errors in ${id}:\n  ${errors.join('\n  ')}`) }
+    await page.close()
   }
-  await browser.close()
 } finally {
-  stop()
+  await browser.close()
+  server.stop()
 }
+if (failed) process.exit(1)
