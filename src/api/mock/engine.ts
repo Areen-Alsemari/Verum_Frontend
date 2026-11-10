@@ -1,9 +1,10 @@
 import type {
-  AgentFinishedEvent, AgentStatus, AssetId, ControlValues, EvidenceVerification, ExpectedVsObserved,
+  AgentFinishedEvent, Check, AgentStatus, AssetId, ControlValues, EvidenceVerification, ExpectedVsObserved,
   FlaggedAsset, Hypothesis, InspectionOption, Issue, RoleKey, RunBundle, RunEvent, Severity,
 } from '../types'
 import { AGENTS, DEFAULT_FAULT_ASSET, SCENARIOS } from './data'
 import { STATIC_FACILITY as F, assetById, downstreamPipes, firstOfKind } from '../../facility'
+import { sensorReadings, type StreamPlan } from './stream'
 
 export interface TimedEvent {
   /** milliseconds since the run started (virtual time) */
@@ -14,9 +15,10 @@ export interface TimedEvent {
 export interface MockRun {
   events: TimedEvent[]
   bundle: RunBundle
+  outcomes: Record<RoleKey, Outcome>
 }
 
-interface Outcome {
+export interface Outcome {
   status: AgentStatus
   issues: Issue[]
   report: string | null
@@ -58,6 +60,30 @@ function transmitterNear(id: string): string {
 function pumpNear(id: string): string {
   const next = downstreamPipes(F, id).map((p) => p.to_node).find((n) => n && assetById(F, n)?.kind === 'pump')
   return next ?? firstOfKind(F, 'pump')?.asset_id ?? id
+}
+
+/** Catalogue action for an asset (by kind) with mock precondition outcomes. Cost and duration are the catalogue's own values. */
+function catalogOption(assetId: string): Pick<InspectionOption, 'action_id' | 'feasibility' | 'precondition_checks' | 'cost_usd' | 'duration_min'> {
+  const kind = assetById(F, assetId)?.kind
+  const act = (F.inspection_catalog ?? []).find((a) => a.target_kind === kind)
+  if (!act) return {}
+  const outcomeFor = (d: string): Check['outcome'] => {
+    if (/permit|approval|access/i.test(d)) return 'unknown'
+    if (/Tank level above/i.test(d)) return 'pass'
+    if (/flowing or pressurised/i.test(d)) return 'pass'
+    if (/Pump running under load/i.test(d)) return assetId === 'P-101B' ? 'fail' : 'pass'
+    return 'unknown'
+  }
+  const checks: Check[] = act.preconditions.map((d, i) => ({
+    check_id: `${act.action_id}-pre-${i + 1}`, description: d, outcome: outcomeFor(d), evidence_ids: ['source-observations'],
+  }))
+  return {
+    action_id: act.action_id,
+    feasibility: checks.some((x) => x.outcome === 'fail') ? 'blocked' : 'eligible_for_human_review',
+    precondition_checks: checks,
+    cost_usd: act.cost_usd,
+    duration_min: act.duration_min,
+  }
 }
 
 function num(c: ControlValues, k: string, d: number): number {
@@ -290,10 +316,11 @@ function buildBundle(runId: string, scenarioId: string, c: ControlValues, o: Rec
       equipment: ['Inspect the selected asset', 'Gathers direct evidence about the asset.'],
     }
     const [t, r] = byLoc[cat]!
-    opts.push({ id: 'opt-1', title: t, rationale: r, targets: [lead], distinguishes: hyps.slice(0, 2).map((h) => h.id) })
+    opts.push({ id: 'opt-1', title: t, rationale: r, targets: [lead], distinguishes: hyps.slice(0, 2).map((h) => h.id), ...catalogOption(lead) })
     if (cat !== 'sensor') {
       opts.push({ id: 'opt-2', title: `Compare ${transmitterNear(lead)} against a reference gauge`, rationale: 'Rules a measurement fault in or out.',
-        targets: [transmitterNear(lead)], distinguishes: hyps.filter((h) => h.id === 'h-sensor' || h.support_level === 'leading').map((h) => h.id) })
+        targets: [transmitterNear(lead)], distinguishes: hyps.filter((h) => h.id === 'h-sensor' || h.support_level === 'leading').map((h) => h.id),
+        ...catalogOption(transmitterNear(lead)) })
     }
   }
 
@@ -382,6 +409,8 @@ export function buildMockRun(runId: string, scenarioId: string, controls: Contro
   const c: ControlValues = {}
   for (const spec of sc.controls) c[spec.id] = controls[spec.id] ?? spec.default
   const o = planOutcomes(scenarioId, c)
+  const bundle = buildBundle(runId, scenarioId, c, o)
+  const flaggedBy = (role: RoleKey) => bundle.flagged_assets.filter((f) => f.flagged_by.includes(role)).map((f) => f.asset)
   const ev: TimedEvent[] = []
   const add = (at: number, event: RunEvent) => ev.push({ at, event })
 
@@ -409,6 +438,8 @@ export function buildMockRun(runId: string, scenarioId: string, controls: Contro
     const fin: AgentFinishedEvent = {
       type: 'agent_finished', ts: t, role_key: role, status: out.status, issues: out.issues,
       consumed_evidence_ids: consumedFor(role, o), report_summary: out.report,
+      flagged_asset_ids: out.report === null ? [] : flaggedBy(role),
+      summary: out.report,
     }
     add(t, fin)
     return t
@@ -423,11 +454,26 @@ export function buildMockRun(runId: string, scenarioId: string, controls: Contro
   t = runAgent('inspection_quality_documentation', t, ['diagnostic_reasoning', 'inspection_planning']) + 100
   t = runAgent('evidence_verification_decision', t, ['diagnostic_reasoning', 'inspection_planning', 'inspection_quality_documentation']) + 150
 
-  const bundle = buildBundle(runId, scenarioId, c, o)
+  // simulated sensor stream alongside the agent events
+  const fault = faultAssetFor(scenarioId, c)
+  const rate = scenarioId === 'developing_fault' ? num(c, 'pressure_drop_rate', 12) : scenarioId === 'quiet_window' ? 0 : 14
+  const conflict = scenarioId === 'agent_conflict' && !bool(c, 'extra_evidence', false)
+  const near = fault ? transmitterNear(fault) : null
+  const plan: StreamPlan = {
+    scenarioId, controls: c, faultAsset: fault, dropRate: rate,
+    droppingTags: fault && rate >= 3 ? [...new Set([near!, ...F.sensors.filter((x) => x.asset_id === fault && x.unit === 'barg').map((x) => x.tag_id)])] : [],
+    suspectTags: [
+      ...(conflict && near ? [near] : []),
+      ...(scenarioId === 'quiet_window' && num(c, 'noise_level', 0.1) > 0.6 ? F.sensors.filter((x) => x.unit === 'barg').map((x) => x.tag_id) : []),
+    ],
+    missingTags: scenarioId === 'quiet_window' && bool(c, 'sensor_dropout', false) ? ['PT-001'] : [],
+  }
+  for (const r of sensorReadings(plan, t - 100)) ev.push(r)
+
   add(t, {
     type: 'run_finished', ts: t, final_decision_state: bundle.final_decision_state, verified: bundle.verified,
     expected_vs_observed: bundle.expected_vs_observed,
   })
   ev.sort((a, b) => a.at - b.at)
-  return { events: ev, bundle }
+  return { events: ev, bundle, outcomes: o }
 }

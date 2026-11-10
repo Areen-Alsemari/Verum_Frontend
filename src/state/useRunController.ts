@@ -73,7 +73,10 @@ export function useRunController(client: ApiClient | null, agents: AgentInfo[], 
             [scenario.id]: { runId, decision: ev.final_decision_state, verified: ev.verified, checks: ev.expected_vs_observed },
           }))
           client.getRun(runId)
-            .then((bundle) => dispatch({ type: 'bundle', bundle }))
+            .then((bundle) => {
+              dispatch({ type: 'bundle', bundle })
+              return client.getReport(runId).then((report) => dispatch({ type: 'report', report }), () => dispatch({ type: 'report', report: null }))
+            })
             .catch((e) => dispatch({ type: 'failed', error: `Could not load the result bundle: ${e instanceof Error ? e.message : String(e)}` }))
             .finally(() => { settleRef.current?.(); settleRef.current = null })
         }

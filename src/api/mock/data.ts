@@ -126,3 +126,15 @@ export const SCENARIOS: Scenario[] = [
     ],
   },
 ]
+
+/** Per-agent limitation text used by the mock report (the backend carries one list per agent response). */
+export const AGENT_LIMITATIONS: Record<string, string> = {
+  predictive_health: 'Predictive Health: trends use the supplied window only; no verified past maintenance was supplied.',
+  anomaly_detection: 'Anomaly Detection: departures are relative to the simulated expected pattern, not to field-qualified limits.',
+  topology_dependency: 'Topology & Dependency: uses the declared design connections; field routing is not verified.',
+  historical_asset_intelligence: 'Historical Asset Intelligence: the reference release holds no verified maintenance history.',
+  diagnostic_reasoning: 'Diagnostic Reasoning: hypotheses are unconfirmed and are not ranked by probability.',
+  inspection_planning: 'Inspection Planning: options are advisory; preconditions and permits are not checked in the field.',
+  inspection_quality_documentation: 'Inspection Quality & Documentation: no inspection results were recorded in this run.',
+  evidence_verification_decision: 'Evidence Verification & Decision: checks cover cited evidence ids only; equipment condition is not confirmed.',
+}

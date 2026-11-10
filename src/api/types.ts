@@ -2,8 +2,9 @@
  * API contract (proposed). Kept in one file so it is easy to change.
  * The human-readable copy is docs/api-contract.md.
  *
- * Nothing here is verified against a running backend: no backend code was
- * available when this was written.
+ * The HTTP endpoints are not verified against a running backend (the Verum checkout has no HTTP
+ * service). The report shape follows the backend's contracts/reports/maintenance_report.schema.json.
+ * Every addition is optional so an older backend still works; missing data shows as "unknown".
  */
 
 export type RoleKey =
@@ -131,6 +132,25 @@ export interface AgentFinishedEvent {
   consumed_evidence_ids: string[]
   /** null when the agent returned no usable report */
   report_summary: string | null
+  /** Optional addition: asset ids (facility ids) this agent flagged. */
+  flagged_asset_ids?: string[]
+  /** Optional addition: a short per-agent summary line. */
+  summary?: string | null
+}
+
+/** Signal quality as given by the stream. Anything other than "good" is never shown as a normal value. */
+export type SignalQuality = 'good' | 'suspect' | 'stale' | 'missing' | (string & {})
+
+/** Optional addition: one replayed sensor sample. `t` is seconds since the start of the recorded window. */
+export interface SensorReadingEvent {
+  type: 'sensor_reading'
+  ts: number
+  tag_id: string
+  /** null when the sample is missing */
+  value: number | boolean | null
+  unit: string
+  quality: SignalQuality
+  t: number
 }
 export interface ExpectedVsObserved {
   check: string
@@ -149,6 +169,7 @@ export interface RunFinishedEvent {
 }
 
 export type RunEvent =
+  | SensorReadingEvent
   | RunStartedEvent
   | AgentStartedEvent
   | RunMessageEvent
@@ -180,6 +201,16 @@ export interface Hypothesis {
   conflicting_evidence_ids: string[]
 }
 
+/** A check as defined in the backend common schema (pass / fail / unknown). */
+export interface Check {
+  check_id: string
+  description: string
+  outcome: 'pass' | 'fail' | 'unknown'
+  evidence_ids: string[]
+}
+
+export type Feasibility = 'eligible_for_human_review' | 'blocked' | 'unknown'
+
 export interface InspectionOption {
   id: string
   title: string
@@ -189,6 +220,12 @@ export interface InspectionOption {
   distinguishes: string[]
   /** Shown as a label only when the API sets it. */
   recommended?: boolean
+  /** Optional additions, matching Agent 6 (inspection_planning) option fields. */
+  action_id?: string
+  feasibility?: Feasibility
+  precondition_checks?: Check[]
+  cost_usd?: number | null
+  duration_min?: number | null
 }
 
 export interface EvidenceVerification {
@@ -225,6 +262,90 @@ export interface RunBundle {
   expected_vs_observed: ExpectedVsObserved[]
 }
 
+// ---- facility: GET /api/facility (optional addition) -----------------------
+
+export interface FacilityAssetDto {
+  asset_id: string
+  kind: string
+  label: string
+  position_hint?: number[] | null
+  connects_to: string[]
+}
+export interface FacilitySensorDto {
+  tag_id: string
+  asset_id: string | null
+  unit: string
+  label?: string
+}
+export interface FacilityDto {
+  assets: FacilityAssetDto[]
+  sensors: FacilitySensorDto[]
+}
+
+// ---- maintenance report: GET /api/runs/{id}/report (optional addition) -----
+// Shape of Agent 7's build_report output (contracts/reports/maintenance_report.schema.json).
+
+export interface ReportContext {
+  case_id?: string
+  analysis_id?: string
+  revision?: number
+  as_of_s?: number
+  as_of_utc?: string | null
+  data_release?: string
+  reference_snapshot_sha256?: string
+  scope_id?: string
+  execution_mode?: string
+}
+export interface SourceReport {
+  report_id: string
+  agent: RoleKey
+  content_sha256?: string
+}
+export interface Finding {
+  finding_id: string
+  kind: 'observation' | 'hypothesis' | 'inspection_check' | 'assessment' | (string & {})
+  statement: string
+  measurement?: { value: number; unit: string } | null
+  source_report_id: string
+  evidence_ids: string[]
+}
+export interface ReportInspectionOption {
+  action_id: string
+  target_asset: string
+  feasibility: Feasibility
+  cost_usd?: number | null
+  duration_min?: number | null
+  source_report_id: string
+  evidence_ids: string[]
+  /** Not in the report schema; carried from Agent 6 when available. */
+  precondition_checks?: Check[]
+}
+export interface NextStep {
+  description: string
+  source_report_id: string
+  evidence_ids: string[]
+}
+export interface MaintenanceReport {
+  report_version?: string
+  report_id: string
+  context?: ReportContext
+  report_type?: string
+  title?: string
+  review_status?: string
+  assessment_state?: string | null
+  source_reports: SourceReport[]
+  findings: Finding[]
+  inspection_options: ReportInspectionOption[]
+  next_steps?: NextStep[]
+  missing_information: string[]
+  limitations: string[]
+  narrative?: { provider?: string; model?: string | null; prompt_id?: string | null; text?: string; source_report_ids?: string[] } | null
+  advisory_only?: boolean | null
+  human_decision_required?: boolean | null
+  automatic_action_authorized?: boolean | null
+  equipment_condition_confirmed?: boolean | null
+}
+
 // ---- client interface ----------------------------------------------------
 
 export interface RunStream {
@@ -239,4 +360,8 @@ export interface ApiClient {
   /** Open the event stream. `onError` is called for transport failures only. */
   streamEvents(runId: string, onEvent: (e: RunEvent) => void, onError: (err: Error) => void): RunStream
   getRun(runId: string): Promise<RunBundle>
+  /** null when the backend does not provide it (the UI then uses the static snapshot). */
+  getFacility(): Promise<FacilityDto | null>
+  /** null when the backend does not provide it (the UI then shows "unknown"). */
+  getReport(runId: string): Promise<MaintenanceReport | null>
 }

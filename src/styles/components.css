@@ -246,3 +246,4 @@
 .strip-meta { font-family: var(--font-mono); font-size: 11.5px; color: var(--muted); }
 .st-running .state-dot { animation: pulse 1.4s ease-in-out infinite; }
 @media (max-width: 1500px) { .strip { grid-template-columns: repeat(5, minmax(0, 1fr)); row-gap: 14px; } .strip-step:nth-child(6)::before { display: none; } }
+.badge-warn { padding: 6px 12px; border-radius: 999px; border: 1px solid var(--yellow); color: var(--yellow); background: rgba(242,201,76,0.1); font-size: 12px; font-weight: 600; cursor: help; }

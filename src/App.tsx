@@ -15,6 +15,7 @@ import { TABS, useHashRoute, type TabId } from './shell/routes'
 import { CommandCenter } from './command/CommandCenter'
 import { FacilitySummary } from './command/FacilitySummary'
 import { RunBar } from './components/RunBar'
+import { STATIC_FACILITY, facilityFromDto, snapshotMismatch, unknownIds, type Facility } from './facility'
 
 function TabPanel({ id, active, actions, sub, children }: { id: TabId; active: TabId; actions?: React.ReactNode; sub?: string; children: React.ReactNode }) {
   if (id !== active) return null
@@ -38,6 +39,7 @@ export default function App() {
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [tab, setTab] = useHashRoute()
+  const [facility, setFacility] = useState<Facility>(STATIC_FACILITY)
 
   useEffect(() => {
     let cancelled = false
@@ -51,6 +53,8 @@ export default function App() {
         setAgents([...a].sort((x, y) => x.order - y.order))
         setScenarios(s)
         setSelectedId(s[0]?.id ?? null)
+        const dto = await api.client.getFacility().catch(() => null)
+        if (!cancelled && dto && api.client.mode === 'real') setFacility(facilityFromDto(dto))
       } catch (e) {
         if (!cancelled) setLoadError(e instanceof Error ? e.message : String(e))
       }
@@ -81,6 +85,17 @@ export default function App() {
     <RunBar scenarios={scenarios} selectedId={selectedId} status={run.status} onSelect={setSelectedId}
       onRun={() => scenario && void ctl.run(scenario, values)} onStop={ctl.stop} onMore={() => setTab('scenarios')} />
   )
+  // ids from the run (or the API facility) that the snapshot does not contain
+  const runIds = [
+    ...(run.bundle?.flagged_assets.map((f) => f.asset) ?? []), ...(run.flaggedAssetIds ?? []),
+    ...Object.keys(run.sensors), ...(run.bundle?.inspection_options.flatMap((o) => o.targets) ?? []),
+  ]
+  const mismatch = [...new Set([...unknownIds(facility, runIds), ...(facility.origin === 'api' ? snapshotMismatch(facility) : [])])]
+  const mismatchBadge = mismatch.length > 0 && (
+    <span className="badge-warn" tabIndex={0} title={`Ids not in the facility snapshot: ${mismatch.join(', ')}`} aria-label={`Facility mismatch: ${mismatch.length} ids not in the facility snapshot: ${mismatch.join(', ')}`}>
+      Facility mismatch · {mismatch.length}
+    </span>
+  )
   const failedAgents = Object.values(run.agents).filter((a) => a.state === 'error' || a.state === 'rejected').length
   const badges: Partial<Record<TabId, { text: string; tone?: 'fail' | 'warn' | 'info' }>> = {}
   if (failedAgents) badges.agents = { text: String(failedAgents), tone: 'fail' }
@@ -90,14 +105,14 @@ export default function App() {
   return (
     <div className="app">
       <div className="backdrop" aria-hidden="true" />
-      <Header demoReason={demoReason} status={run.status}>
+      <Header demoReason={demoReason} status={run.status} extra={mismatchBadge}>
         <TabBar active={tab} onSelect={setTab} badges={badges} />
       </Header>
       <main>
         <TabPanel id="command" active={tab} actions={runBar} sub="Simulated gasoline terminal. Simulated stream (replay of recorded windows), not live plant data.">
           {runMessages}
           <CommandCenter agents={agents} run={run} scenario={scenario ?? undefined} simulated={client?.mode === 'mock'}
-            selectedAgent={drawerRole} onSelectAgent={(r) => setDrawerRole((cur) => (cur === r ? null : r))} onGo={setTab}
+            selectedAgent={drawerRole} onSelectAgent={(r) => setDrawerRole((cur) => (cur === r ? null : r))} onGo={setTab} readings={run.status === 'idle' ? null : run.readingCount}
             stage={<FacilitySummary />} />
         </TabPanel>
         <TabPanel id="scenarios" active={tab}>

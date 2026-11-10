@@ -1,4 +1,6 @@
-import type { ApiClient, RunBundle, RunEvent } from '../types'
+import type { ApiClient, FacilityDto, MaintenanceReport, RunBundle, RunEvent } from '../types'
+import { STATIC_FACILITY } from '../../facility'
+import { buildMockReport } from './report'
 import { AGENTS, SCENARIOS } from './data'
 import { buildMockRun, type MockRun } from './engine'
 
@@ -54,6 +56,18 @@ export function createMockClient(): ApiClient {
       const run = runs.get(runId)
       if (!run) throw new Error(`Unknown run ${runId}`)
       return structuredClone(run.bundle)
+    },
+    async getFacility(): Promise<FacilityDto> {
+      await sleep(10)
+      return {
+        assets: STATIC_FACILITY.assets.map((a) => ({ asset_id: a.asset_id, kind: a.kind, label: a.label, position_hint: a.position_hint ?? null, connects_to: [...a.connects_to] })),
+        sensors: STATIC_FACILITY.sensors.map((s) => ({ tag_id: s.tag_id, asset_id: s.asset_id, unit: s.unit, label: s.tag_id })),
+      }
+    },
+    async getReport(runId): Promise<MaintenanceReport | null> {
+      await sleep(10)
+      const run = runs.get(runId)
+      return run ? buildMockReport(runId, run) : null
     },
   }
 }
