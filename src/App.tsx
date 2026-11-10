@@ -153,11 +153,12 @@ export default function App() {
 
   return (
     <div className="app">
+      <a className="skip-link" href="#main">Skip to content</a>
       <div className="backdrop" aria-hidden="true" />
       <Header demoReason={demoReason} status={run.status} extra={mismatchBadge}>
         <TabBar active={tab} onSelect={setTab} badges={badges} />
       </Header>
-      <main>
+      <main id="main" tabIndex={-1}>
         <TabPanel id="command" active={tab} actions={runBar} sub="Simulated gasoline terminal. Simulated stream (replay of recorded windows), not live plant data.">
           {runMessages}
           <CommandCenter agents={agents} run={run} scenario={runScenario} simulated={client?.mode === 'mock'}
