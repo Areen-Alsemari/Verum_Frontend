@@ -48,6 +48,12 @@ export function AgentDrawer({ info, st, lastTs, agentsByKey, onClose }: Props) {
       {finished && st!.report === null && <p className="null-report">No report was returned (null).</p>}
       {finished && st!.report !== null && <p className="drawer-text">{st!.report}</p>}
 
+      <h4 className="label">Flagged assets</h4>
+      {!finished ? <p className="control-help">Not finished yet.</p>
+        : st!.flagged === undefined ? <p><Unknown what="flagged assets" /></p>
+        : st!.flagged.length === 0 ? <p className="control-help">None.</p>
+        : <p className="chips">{st!.flagged.map((id) => <code key={id} className="chip">{id}</code>)}</p>}
+
       <h4 className="label">Issues</h4>
       {!finished && <p className="control-help">Not finished yet.</p>}
       {finished && st!.issues.length === 0 && <p className="control-help">None reported.</p>}

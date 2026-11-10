@@ -68,7 +68,7 @@ export function sensorReadings(plan: StreamPlan, end: number, step = 600): { at:
       else {
         const n = (NOISE[s.unit.startsWith('m3') ? 'm3' : s.unit] ?? 0.01) * (r() * 2 - 1)
         let v = base + n
-        if (plan.droppingTags.includes(s.tag_id)) v -= (plan.dropRate / 100) * (t / 3600) * 60 // kPa/h -> bar, window compressed 60x
+        if (plan.droppingTags.includes(s.tag_id)) v -= (plan.dropRate / 100) * (t / 3600) * 10 // kPa/h -> bar/h, replay compressed 10x
         value = Math.round(v * 1000) / 1000
       }
       if (plan.suspectTags.includes(s.tag_id) && i >= ticks / 3) quality = 'suspect'

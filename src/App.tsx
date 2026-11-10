@@ -4,7 +4,8 @@ import { Header } from './components/Header'
 import { ScenarioPicker } from './components/ScenarioPicker'
 import { AgentBoard } from './components/AgentBoard'
 import { AgentDrawer } from './components/AgentDrawer'
-import { ResultView } from './components/ResultView'
+import { InvestigationTab } from './tabs/InvestigationTab'
+import { InspectionTab } from './tabs/InspectionTab'
 import { ScenarioChecks } from './components/ScenarioChecks'
 import { MessageLog } from './components/MessageLog'
 import { ControlPanel } from './components/ControlPanel'
@@ -160,7 +161,7 @@ export default function App() {
             selectedAgent={drawerRole} onSelectAgent={(r) => setDrawerRole((cur) => (cur === r ? null : r))} onGo={setTab} readings={run.status === 'idle' ? null : run.readingCount}
             stage={facilityView} focus={focusView()} />
         </TabPanel>
-        <TabPanel id="scenarios" active={tab}>
+        <TabPanel id="scenarios" active={tab} sub="Choose a scenario, set its controls (generated from the scenario data) and run it. Observed results are checked against the expected ones.">
           {runMessages}
           <div className="grid-side">
             <div className="stack">
@@ -180,11 +181,19 @@ export default function App() {
             </div>
           </div>
         </TabPanel>
-        <TabPanel id="agents" active={tab} actions={runBar}>{runMessages}{board}</TabPanel>
-        <TabPanel id="log" active={tab} actions={runBar}><MessageLog messages={run.messages} agents={agents} /></TabPanel>
-        <TabPanel id="investigation" active={tab} actions={runBar}>{runMessages}<ResultView run={run} agents={agents} /></TabPanel>
-        <TabPanel id="inspection" active={tab} actions={runBar}>{runMessages}<ResultView run={run} agents={agents} /></TabPanel>
-        <TabPanel id="report" active={tab} actions={runBar}>{runMessages}<ResultView run={run} agents={agents} /></TabPanel>
+        <TabPanel id="agents" active={tab} actions={runBar} sub="Live status of the eight agents. Select a card for its timing, issues and consumed reports.">
+          {runMessages}{board}
+        </TabPanel>
+        <TabPanel id="log" active={tab} actions={runBar} sub="Runner and agent requests, responses, attachments and issues.">
+          <MessageLog messages={run.messages} agents={agents} />
+        </TabPanel>
+        <TabPanel id="investigation" active={tab} actions={runBar} sub="Unconfirmed hypotheses, evidence and report ids, and a close-up of the flagged assets.">
+          {runMessages}<InvestigationTab run={run} agents={agents} focus={focusView('Flagged assets, close-up')} />
+        </TabPanel>
+        <TabPanel id="inspection" active={tab} actions={runBar} sub="Advisory options for an inspector to consider. A human decides.">
+          {runMessages}<InspectionTab run={run} />
+        </TabPanel>
+        <TabPanel id="report" active={tab} actions={runBar}>{runMessages}<p className="state-msg">The report card is built in the next step.</p></TabPanel>
       </main>
       {drawerRole && agentsByKey[drawerRole] && (
         <AgentDrawer info={agentsByKey[drawerRole]!} st={run.agents[drawerRole]} lastTs={run.lastTs} agentsByKey={agentsByKey} onClose={() => setDrawerRole(null)} />

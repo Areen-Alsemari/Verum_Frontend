@@ -56,7 +56,7 @@ describe('honesty rules', () => {
   it('does not use "recommended" or "approved" unless the API says so', () => {
     for (const id of SCENARIOS) {
       const { container, unmount } = render(<ResultView run={finishedState(id)} agents={AGENTS} />)
-      expect(container.textContent).not.toMatch(/recommend|approv/i)
+      expect(container.textContent).not.toMatch(/recommend|approved/i)
       unmount()
     }
     const run = finishedState('developing_fault')

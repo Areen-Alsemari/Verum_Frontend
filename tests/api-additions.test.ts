@@ -128,3 +128,12 @@ describe('facility from the API', () => {
     expect(snapshotMismatch(f)).toContain('TK-999')
   })
 })
+
+describe('mock stream plausibility', () => {
+  it('never produces negative gauge pressure in the four scenarios at the maximum drop rate', () => {
+    for (const [id, c] of [['developing_fault', { pressure_drop_rate: 40, fault_location: 'PT-201' }], ['agent_conflict', {}], ['agent_failure', {}], ['quiet_window', {}]] as const) {
+      const run = buildMockRun('r', id, c)
+      for (const e of run.events) if (e.event.type === 'sensor_reading' && e.event.unit === 'barg' && typeof e.event.value === 'number') expect(e.event.value).toBeGreaterThan(0)
+    }
+  })
+})
