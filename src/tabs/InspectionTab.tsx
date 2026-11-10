@@ -23,7 +23,7 @@ export function InspectionTab({ run }: { run: RunState }) {
       <section className="panel" aria-labelledby="await-h">
         <h3 id="await-h" className="label panel-title">Awaiting human decision</h3>
         <DecisionPanel decision={b?.final_decision_state ?? run.finalDecisionState} verified={b ? b.verified : run.verified} flags={b?.flags} />
-        <p className="control-help block-intro">A person in one of these roles decides what happens next, outside this system. Nothing here starts, approves or dispatches work.</p>
+        <p className="advisory-note" role="note"><strong>Advisory only.</strong> A human decides. No automatic action is authorised.</p>
       </section>
     </div>
   )

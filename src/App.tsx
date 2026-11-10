@@ -163,7 +163,8 @@ export default function App() {
         <TabBar active={tab} onSelect={setTab} badges={badges} />
       </Header>
       <main id="main" tabIndex={-1}>
-        <TabPanel id="command" active={tab} actions={runBar} sub="Simulated gasoline terminal. Simulated stream (replay of recorded windows), not live plant data.">
+        <TabPanel id="command" active={tab} sub="Simulated gasoline terminal. Simulated stream (replay of recorded windows), not live plant data.">
+          {runBar}
           {runMessages}
           <CommandCenter agents={agents} run={run} scenario={runScenario} simulated={client?.mode === 'mock'}
             selectedAgent={drawerRole} onSelectAgent={(r) => setDrawerRole((cur) => (cur === r ? null : r))} onGo={setTab} readings={run.status === 'idle' ? null : run.readingCount}
@@ -214,9 +215,6 @@ export default function App() {
       {pendingSnapshot && (
         <SnapshotTaker key={`${run.runId}:${pendingSnapshot}`} facility={facility} assetId={pendingSnapshot} flagged={flaggedMap} readings={run.sensors} onDone={onSnapshot} />
       )}
-      <footer className="honesty-bar" role="note">
-        <strong>Advisory only.</strong> A human decides. No automatic action is authorised.
-      </footer>
     </div>
   )
 }

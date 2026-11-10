@@ -21,8 +21,9 @@ npm run typecheck    # tsc, strict
 Hash routing (`#/command`, `#/agents`, `#/log`, `#/investigation`, `#/inspection`, `#/report`),
 no router dependency. The pill tab bar is a WAI-ARIA tablist (arrow keys, Home, End).
 
-The Command center has the scenario switcher (title, kind and description), Run, Stop, Next event while stepping,
-and **All controls**, which opens the
+The Command center starts with a full-width scenario bar: the switcher on the left (scenario name and kind; the
+open list adds each description) and Run, Stop, Next event while stepping and **All controls** on the right.
+**All controls** opens the
 scenarios-and-controls card as a modal over the current tab: scenario list, controls generated from scenario
 data, Run / Run step by step / Next event / Run all scenarios / Stop / Reset to defaults, playback speed, and
 observed vs expected. Run actions close the card so the run can be watched; Escape or the backdrop closes it and
@@ -67,7 +68,8 @@ npm run facility -- "/path/to/Verum Backend"
   stale or suspect values show the quality label, never a normal value or 0.
 - Only flagged assets get a ring and a "flagged by N agents" label. On a new flag the camera eases to it.
 - Search by asset or tag id (focuses the camera), legend, list of all assets and sensors by kind.
-- "2D view" draws the same graph as an accessible SVG (keyboard focusable); used automatically without WebGL.
+- "2D view" draws the same graph as an accessible SVG (keyboard focusable), centred, with wheel or +/− zoom,
+  drag to pan and Reset; used automatically without WebGL.
   "Low detail" lowers the pixel ratio, turns off shadows, ticks and the grid. `prefers-reduced-motion`: instant
   camera moves, no idle rotation, no pulsing rings.
 
@@ -114,7 +116,8 @@ The HTTP endpoints are not verified against a running backend; the Verum checkou
 
 - No number is shown unless it is in the API data. Missing values are the hatched word "unknown", never 0, 0%,
   "healthy" or blank. Confidence is shown only when given.
-- A permanent footer states: Advisory only. A human decides. No automatic action is authorised.
+- The human-decision panels (Command center and Inspection plan) state: Advisory only. A human decides. No automatic
+  action is authorised. The report repeats it in its banner and footer. (The fixed page footer was removed on request.)
 - No control or text implies that the system executes, approves or dispatches work.
 - `human_decision_required`, `automatic_action_authorized`, `equipment_condition_confirmed` are shown as given.
 - An agent error or runner rejection is red with its issue code on the board, in the workflow strip, in the log,
@@ -144,7 +147,7 @@ and 13:1 (cream) against the worst-case backdrop; the `--faint` token (about 3.6
 
 ## Accessibility
 
-Skip link, landmarks (`header`, `nav`, `main`, footer note), tablist with roving tabindex, native range inputs
+Skip link, landmarks (`header`, `nav`, `main`), advisory notes with `role="note"`, tablist with roving tabindex, native range inputs
 and `role="switch"` toggles with labels, search combobox with listbox, focus rings, 2D diagram and the asset
 list as keyboard-operable alternatives to the 3D canvas, `prefers-reduced-motion` respected.
 

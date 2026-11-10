@@ -26,9 +26,10 @@ export function WorkflowStrip({ agents, run, selected, onSelect, readings = null
       <ol className="strip">
         <li className="strip-step strip-input">
           <div className="strip-card st-input">
+            <span className="strip-top"><span className="strip-num" aria-hidden="true">in</span></span>
             <span className="strip-name">Sensor stream</span>
-            <span className="strip-state">{readings === null ? <Unknown what="readings received" /> : `${readings} readings`}</span>
-            <span className="control-help">simulated</span>
+            <span className="strip-status">{readings === null ? <Unknown what="readings received" /> : `${readings} readings`}</span>
+            <span className="strip-issue strip-muted">simulated</span>
           </div>
         </li>
         {agents.map((a) => {
@@ -46,11 +47,16 @@ export function WorkflowStrip({ agents, run, selected, onSelect, readings = null
                 aria-label={`${a.order}. ${a.name}: ${STATE_LABEL[ui]}${issue ? `, issue: ${label(issue.code)}` : ''}`}
                 onClick={() => onSelect(a.role_key)}
               >
-                <span className="strip-top"><span className="agent-ico"><AgentIcon role={a.role_key} size={18} /></span><span className="agent-order">{a.order}</span></span>
+                <span className="strip-top">
+                  <span className="strip-num">{a.order}</span>
+                  <span className="agent-ico"><AgentIcon role={a.role_key} size={16} /></span>
+                  <span className="strip-time">{ms ?? ''}</span>
+                </span>
                 <span className="strip-name">{a.name}</span>
-                <span className="agent-state"><span className="state-dot" aria-hidden="true" />{STATE_LABEL[ui]}</span>
-                <span className="strip-meta">{ms ?? ''}</span>
-                {issue && <span className={`issue-code${fail ? ' is-fail' : ''}`} title={issue.code}>{label(issue.code)}</span>}
+                <span className="strip-status"><span className="state-dot" aria-hidden="true" /><span className="strip-status-text">{STATE_LABEL[ui]}</span></span>
+                {issue
+                  ? <span className={`issue-code strip-issue${fail ? ' is-fail' : ''}`} title={issue.code}>{label(issue.code)}</span>
+                  : <span className="strip-issue" aria-hidden="true" />}
               </button>
             </li>
           )

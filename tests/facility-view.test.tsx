@@ -17,8 +17,8 @@ describe('schematic geometry', () => {
 
 describe('2D diagram', () => {
   it('draws the real graph: every asset is a focusable element, none dropped', () => {
-    render(<Facility2D facility={F} flagged={new Map()} selectedId={null} onSelect={() => {}} />)
-    expect(screen.getAllByRole('button')).toHaveLength(F.assets.length)
+    const { container } = render(<Facility2D facility={F} flagged={new Map()} selectedId={null} onSelect={() => {}} />)
+    expect(container.querySelectorAll('svg [role="button"]')).toHaveLength(F.assets.length)
     expect(screen.getByRole('button', { name: 'Pipe segment E-PA2' })).toBeInTheDocument()
     expect(screen.getByRole('group', { name: /Schematic, not to scale/ })).toBeInTheDocument()
   })
@@ -34,6 +34,28 @@ describe('2D diagram', () => {
     render(<Facility2D facility={F} flagged={new Map()} selectedId={null} onSelect={(id) => picked.push(id)} />)
     fireEvent.keyDown(screen.getByRole('button', { name: 'Tank TK-101' }), { key: 'Enter' })
     expect(picked).toEqual(['TK-101'])
+  })
+})
+
+describe('2D zoom', () => {
+  it('zooms in and out with the buttons and resets to the centred fit', () => {
+    const { container } = render(<Facility2D facility={F} flagged={new Map()} selectedId={null} onSelect={() => {}} />)
+    const svg = container.querySelector('svg')!
+    const fit = svg.getAttribute('viewBox')!
+    const width = () => Number(svg.getAttribute('viewBox')!.split(' ')[2])
+    expect(screen.getByRole('button', { name: 'Reset' })).toBeDisabled()
+    fireEvent.click(screen.getByRole('button', { name: 'Zoom in' }))
+    expect(width()).toBeLessThan(Number(fit.split(' ')[2]))
+    fireEvent.click(screen.getByRole('button', { name: 'Zoom out' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Zoom out' }))
+    expect(width()).toBeGreaterThan(Number(fit.split(' ')[2]))
+    fireEvent.click(screen.getByRole('button', { name: 'Reset' }))
+    expect(svg.getAttribute('viewBox')).toBe(fit)
+  })
+
+  it('has no zoom controls in the static report version', () => {
+    render(<Facility2D facility={F} flagged={new Map()} selectedId={null} onSelect={() => {}} interactive={false} />)
+    expect(screen.queryByRole('button', { name: 'Zoom in' })).toBeNull()
   })
 })
 

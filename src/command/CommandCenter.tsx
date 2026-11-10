@@ -49,7 +49,7 @@ export function CommandCenter(p: Props) {
             decision={run.bundle?.final_decision_state ?? run.finalDecisionState}
             verified={run.bundle ? run.bundle.verified : run.verified}
             flags={run.bundle?.flags} />
-          <p className="control-help">This panel shows state only. Nothing here starts, approves or dispatches work.</p>
+          <p className="advisory-note" role="note"><strong>Advisory only.</strong> A human decides. No automatic action is authorised.</p>
         </section>
       </aside>
     </div>

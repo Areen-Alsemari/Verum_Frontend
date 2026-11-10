@@ -1,4 +1,4 @@
-.app { min-height: 100vh; display: flex; flex-direction: column; padding-bottom: 52px; position: relative; isolation: isolate; }
+.app { min-height: 100vh; display: flex; flex-direction: column; padding-bottom: 8px; position: relative; isolation: isolate; }
 
 /* ---------- top bar ---------- */
 .topbar {

@@ -19,7 +19,7 @@ function finishedState(scenario: string, controls = {}): RunState {
 const SCENARIOS = ['quiet_window', 'developing_fault', 'agent_conflict', 'agent_failure']
 
 describe('honesty rules', () => {
-  it('shows the advisory banner permanently, even before data loads', () => {
+  it('shows the advisory statement on the command center, even before data loads', () => {
     render(<App />)
     expect(screen.getByRole('note')).toHaveTextContent('Advisory only. A human decides. No automatic action is authorised.')
   })
