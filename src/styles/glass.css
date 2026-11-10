@@ -1,0 +1,45 @@
+/*
+ * Glass surfaces. Rules:
+ * - Only top-level `.glass` panels blur the backdrop; nested glass never blurs again
+ *   (limits the number of simultaneously blurred layers).
+ * - Solid fallback when backdrop-filter is unsupported or prefers-reduced-transparency is set.
+ * - Text sits on >= 0.66 alpha near-black, so cream and muted text stay above WCAG AA.
+ */
+.backdrop {
+  position: fixed; inset: 0; z-index: -1; pointer-events: none;
+  background-color: var(--bg-0);
+  background-image:
+    radial-gradient(120% 80% at 70% 0%, rgba(214,164,90,0.10) 0%, transparent 55%),
+    linear-gradient(180deg, rgba(7,8,10,0.72) 0%, rgba(7,8,10,0.86) 40%, rgba(7,8,10,0.95) 100%),
+    url('/brand/hero-refinery-night.webp');
+  background-size: cover, cover, cover;
+  background-position: center, center, center 78%;
+}
+
+.glass, .panel {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--glass-highlight), var(--glass-shadow);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(120%);
+  backdrop-filter: blur(var(--glass-blur)) saturate(120%);
+}
+/* nested surfaces: tinted but never blurred again */
+.glass .glass, .glass .panel, .panel .panel, .panel .glass, .drawer .panel {
+  -webkit-backdrop-filter: none; backdrop-filter: none;
+  background: var(--glass-bg-raised);
+  box-shadow: var(--glass-highlight);
+}
+.glass-inset { background: var(--glass-bg-inset); border: 1px solid var(--glass-border); border-radius: var(--radius); }
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .glass, .panel, .tabbar, .honesty-bar, .drawer { background: var(--glass-solid); }
+  .glass .glass, .glass .panel, .panel .panel { background: var(--glass-solid-raised); }
+}
+@media (prefers-reduced-transparency: reduce) {
+  .glass, .panel, .tabbar, .honesty-bar, .drawer {
+    -webkit-backdrop-filter: none !important; backdrop-filter: none !important;
+    background: var(--glass-solid) !important;
+  }
+  .glass .glass, .glass .panel, .panel .panel { background: var(--glass-solid-raised) !important; }
+}
