@@ -2,7 +2,6 @@ import { useCallback, useEffect, useState } from 'react'
 
 export const TABS = [
   { id: 'command', label: 'Command center' },
-  { id: 'scenarios', label: 'Scenarios and controls' },
   { id: 'agents', label: 'Agents' },
   { id: 'log', label: 'Message log' },
   { id: 'investigation', label: 'Investigation' },

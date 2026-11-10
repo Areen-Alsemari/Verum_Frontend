@@ -29,6 +29,6 @@ describe('tab bar', () => {
     fireEvent.keyDown(first, { key: 'ArrowLeft' })
     fireEvent.keyDown(first, { key: 'End' })
     fireEvent.keyDown(first, { key: 'Home' })
-    expect(seen).toEqual(['scenarios', 'report', 'report', 'command'])
+    expect(seen).toEqual(['agents', 'report', 'report', 'command'])
   })
 })

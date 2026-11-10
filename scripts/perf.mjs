@@ -3,6 +3,7 @@
 // Headless numbers are an estimate only: they depend on the GL backend the headless browser gets.
 import { chromium } from 'playwright-core'
 import { startMockServer } from './lib/devserver.mjs'
+import { runScenario } from './lib/run.mjs'
 
 const i = process.argv.indexOf('--gl')
 const GL = i === -1 ? 'default' : process.argv[i + 1]
@@ -12,11 +13,7 @@ const server = await startMockServer(5196)
 const browser = await chromium.launch({ executablePath: CHROME, headless: true, args })
 try {
   const page = await browser.newPage({ viewport: { width: 1920, height: 1080 } })
-  await page.goto(`${server.url}/#/scenarios`)
-  await page.locator('[data-scenario="developing_fault"]').first().click()
-  await page.selectOption('#mock-speed', '8')
-  await page.getByRole('button', { name: 'Run', exact: true }).click()
-  await page.getByRole('status').filter({ hasText: 'Run finished' }).first().waitFor({ timeout: 60000 })
+  await runScenario(page, server.url, 'developing_fault')
   await page.evaluate(() => { window.location.hash = '#/command' })
   await page.waitForTimeout(3000)
   const renderer = await page.evaluate(() => {

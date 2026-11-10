@@ -4,6 +4,7 @@
 import { mkdirSync, readFileSync } from 'node:fs'
 import { chromium } from 'playwright-core'
 import { startMockServer } from './lib/devserver.mjs'
+import { runScenario } from './lib/run.mjs'
 
 const OUT = process.argv[2] || 'screenshots'
 const PORT = 5197
@@ -22,11 +23,7 @@ try {
     const errors = []
     page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()) })
     page.on('pageerror', (e) => errors.push(String(e)))
-    await page.goto(`${server.url}/#/scenarios`)
-    await page.locator(`[data-scenario="${id}"]`).first().click()
-    await page.selectOption('#mock-speed', '8')
-    await page.getByRole('button', { name: 'Run', exact: true }).click()
-    await page.getByRole('status').filter({ hasText: 'Run finished' }).first().waitFor({ timeout: 60000 })
+    await runScenario(page, server.url, id)
     await page.evaluate(() => { window.location.hash = '#/report' })
     await page.getByRole('button', { name: 'Save as PDF' }).and(page.locator(':enabled')).waitFor({ timeout: 20000 })
     await page.waitForTimeout(500)

@@ -21,6 +21,7 @@ import { hasWebGL, usePref } from './lib/env'
 import { FocusView } from './command/FocusView'
 import { SnapshotTaker } from './three/SnapshotTaker'
 import { RunBar } from './components/RunBar'
+import { ControlsDialog } from './components/ControlsDialog'
 import { STATIC_FACILITY, facilityFromDto, snapshotMismatch, unknownIds, type Facility } from './facility'
 
 function TabPanel({ id, active, actions, sub, children }: { id: TabId; active: TabId; actions?: React.ReactNode; sub?: string; children: React.ReactNode }) {
@@ -45,6 +46,8 @@ export default function App() {
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [tab, setTab] = useHashRoute()
+  // the old "#/scenarios" link opens the controls card over the command center
+  const [controlsOpen, setControlsOpen] = useState(() => /^#\/?scenarios/.test(window.location.hash))
   const [facility, setFacility] = useState<Facility>(STATIC_FACILITY)
   const [selectedAsset, setSelectedAsset] = useState<string | null>(null)
   const [focusFlag, setFocusFlag] = useState<string | null>(null)
@@ -117,7 +120,8 @@ export default function App() {
   )
   const runBar = (
     <RunBar scenarios={scenarios} selectedId={selectedId} status={run.status} onSelect={setSelectedId}
-      onRun={() => scenario && void ctl.run(scenario, values)} onStop={ctl.stop} onMore={() => setTab('scenarios')} />
+      onRun={() => scenario && void ctl.run(scenario, values)} onStop={ctl.stop} onMore={() => setControlsOpen(true)}
+      stepMode={ctl.stepMode} queued={ctl.queued} onNext={ctl.next} />
   )
   // ids from the run (or the API facility) that the snapshot does not contain
   const runIds = [
@@ -165,26 +169,6 @@ export default function App() {
             selectedAgent={drawerRole} onSelectAgent={(r) => setDrawerRole((cur) => (cur === r ? null : r))} onGo={setTab} readings={run.status === 'idle' ? null : run.readingCount}
             stage={facilityView} focus={focusView()} />
         </TabPanel>
-        <TabPanel id="scenarios" active={tab} sub="Choose a scenario, set its controls (generated from the scenario data) and run it. Observed results are checked against the expected ones.">
-          {runMessages}
-          <div className="grid-side">
-            <div className="stack">
-              <ScenarioPicker scenarios={scenarios} selectedId={selectedId} disabled={running} onSelect={setSelectedId} />
-            </div>
-            <div className="stack">
-              <ControlPanel
-                scenario={scenario} values={values} running={running} stepMode={ctl.stepMode} queued={ctl.queued}
-                runAll={ctl.runAll} isMock={client?.mode === 'mock'}
-                onChange={setValue}
-                onReset={() => scenario && setControlValues((c) => ({ ...c, [scenario.id]: defaultControls(scenario) }))}
-                onRun={() => scenario && void ctl.run(scenario, values)}
-                onRunStep={() => scenario && void ctl.runStepwise(scenario, values)}
-                onNext={ctl.next} onRunAll={() => void ctl.runEvery()} onStop={ctl.stop}
-              />
-              <ScenarioChecks scenarios={scenarios} results={ctl.results} activeId={ctl.activeScenarioId} />
-            </div>
-          </div>
-        </TabPanel>
         <TabPanel id="agents" active={tab} actions={runBar} sub="Live status of the eight agents. Select a card for its timing, issues and consumed reports.">
           {runMessages}{board}
         </TabPanel>
@@ -207,6 +191,26 @@ export default function App() {
       {drawerRole && agentsByKey[drawerRole] && (
         <AgentDrawer info={agentsByKey[drawerRole]!} st={run.agents[drawerRole]} lastTs={run.lastTs} agentsByKey={agentsByKey} onClose={() => setDrawerRole(null)} />
       )}
+      <ControlsDialog open={controlsOpen} onClose={() => setControlsOpen(false)}>
+        {runMessages}
+        <div className="grid-side">
+          <div className="stack">
+            <ScenarioPicker scenarios={scenarios} selectedId={selectedId} disabled={running} onSelect={setSelectedId} />
+          </div>
+          <div className="stack">
+            <ControlPanel
+              scenario={scenario} values={values} running={running} stepMode={ctl.stepMode} queued={ctl.queued}
+              runAll={ctl.runAll} isMock={client?.mode === 'mock'}
+              onChange={setValue}
+              onReset={() => scenario && setControlValues((c) => ({ ...c, [scenario.id]: defaultControls(scenario) }))}
+              onRun={() => { if (scenario) { setControlsOpen(false); void ctl.run(scenario, values) } }}
+              onRunStep={() => { if (scenario) { setControlsOpen(false); void ctl.runStepwise(scenario, values) } }}
+              onNext={ctl.next} onRunAll={() => { setControlsOpen(false); void ctl.runEvery() }} onStop={ctl.stop}
+            />
+            <ScenarioChecks scenarios={scenarios} results={ctl.results} activeId={ctl.activeScenarioId} />
+          </div>
+        </div>
+      </ControlsDialog>
       {pendingSnapshot && (
         <SnapshotTaker key={`${run.runId}:${pendingSnapshot}`} facility={facility} assetId={pendingSnapshot} flagged={flaggedMap} readings={run.sensors} onDone={onSnapshot} />
       )}

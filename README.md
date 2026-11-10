@@ -18,13 +18,18 @@ npm run typecheck    # tsc, strict
 
 ## Tabs
 
-Hash routing (`#/command`, `#/scenarios`, `#/agents`, `#/log`, `#/investigation`, `#/inspection`, `#/report`),
+Hash routing (`#/command`, `#/agents`, `#/log`, `#/investigation`, `#/inspection`, `#/report`),
 no router dependency. The pill tab bar is a WAI-ARIA tablist (arrow keys, Home, End).
+
+Every tab has a compact run bar (scenario, Run, Stop, Next event while stepping). **All controls** opens the
+scenarios-and-controls card as a modal over the current tab: scenario list, controls generated from scenario
+data, Run / Run step by step / Next event / Run all scenarios / Stop / Reset to defaults, playback speed, and
+observed vs expected. Run actions close the card so the run can be watched; Escape or the backdrop closes it and
+focus returns to the button. The old `#/scenarios` link opens the card.
 
 | Tab | Content |
 |---|---|
 | Command center | 3D facility with sensor markers; operations briefing (written from run data only); KPI row (agents complete, open issues, flagged assets, decision state); needs-attention list; agent workflow strip fed by the simulated sensor stream; human-decision panel (state only); focus view of flagged assets |
-| Scenarios and controls | Scenario list, controls generated from scenario data, Run / Run step by step / Next event / Run all scenarios / Stop / Reset to defaults, playback speed, observed vs expected |
 | Agents | Eight agent cards with dependency arrows, status, timing, issues, consumed reports; detail drawer |
 | Message log | Runner and agent requests, responses, attachments and issues; filters, pause scroll, expandable payloads, copy as JSON |
 | Investigation | Agent outcomes (failures red with issue code), unconfirmed hypotheses, evidence verification, report and evidence ids, focus view |
@@ -145,7 +150,7 @@ machine: 60 fps (p95 16.7 ms) with ANGLE Metal on an Apple M1 Pro integrated GPU
 npm run screenshots
 ```
 
-Starts a mock-mode dev server, runs each scenario and captures every tab at 1920x1080 in headless Google Chrome
+Starts a mock-mode dev server, runs each scenario and captures every tab and the All controls card at 1920x1080 in headless Google Chrome
 (override the path with `CHROME_PATH`) into `screenshots/`.
 
 ## Brand assets

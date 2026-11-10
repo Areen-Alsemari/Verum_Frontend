@@ -9,10 +9,14 @@ interface Props {
   onRun: () => void
   onStop: () => void
   onMore: () => void
+  /** step-by-step mode: the Next event button lives here so the run can be watched with the card closed */
+  stepMode?: boolean
+  queued?: number
+  onNext?: () => void
 }
 
 /** Compact run controls for tabs other than "Scenarios and controls". */
-export function RunBar({ scenarios, selectedId, status, onSelect, onRun, onStop, onMore }: Props) {
+export function RunBar({ scenarios, selectedId, status, onSelect, onRun, onStop, onMore, stepMode = false, queued = 0, onNext }: Props) {
   const running = status === 'running'
   return (
     <div className="runbar glass" role="group" aria-label="Run controls">
@@ -21,8 +25,11 @@ export function RunBar({ scenarios, selectedId, status, onSelect, onRun, onStop,
         {scenarios.map((s) => <option key={s.id} value={s.id}>{s.title}</option>)}
       </select>
       <button type="button" className="btn btn-primary" disabled={running || !selectedId} onClick={onRun}>Run</button>
+      {running && stepMode && (
+        <button type="button" className="btn" disabled={queued === 0} onClick={onNext}>Next event ({queued} waiting)</button>
+      )}
       <button type="button" className="btn btn-danger" disabled={!running} onClick={onStop}>Stop</button>
-      <button type="button" className="btn btn-ghost" onClick={onMore}>All controls</button>
+      <button type="button" className="btn btn-ghost" aria-haspopup="dialog" onClick={onMore}>All controls</button>
     </div>
   )
 }

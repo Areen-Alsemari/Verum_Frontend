@@ -3,6 +3,7 @@
 // Usage: node scripts/smoke.mjs [--url http://localhost:5199] [--scenario developing_fault] [--tabs command,report] [--shot dir]
 import { mkdirSync } from 'node:fs'
 import { chromium } from 'playwright-core'
+import { runScenario } from './lib/run.mjs'
 
 const arg = (k, d) => {
   const i = process.argv.indexOf(`--${k}`)
@@ -22,12 +23,7 @@ page.on('pageerror', (e) => errors.push(String(e)))
 await page.goto(URL)
 await page.waitForTimeout(800)
 if (SCENARIO) {
-  await page.evaluate((id) => { window.location.hash = '#/scenarios' ; return id }, SCENARIO)
-  await page.waitForTimeout(300)
-  await page.locator(`[data-scenario="${SCENARIO}"]`).first().click()
-  await page.selectOption('#mock-speed', '8')
-  await page.getByRole('button', { name: 'Run', exact: true }).click()
-  await page.getByRole('status').filter({ hasText: 'Run finished' }).first().waitFor({ timeout: 60000 })
+  await runScenario(page, URL, SCENARIO)
   await page.waitForTimeout(600)
 }
 if (SHOT) mkdirSync(SHOT, { recursive: true })
