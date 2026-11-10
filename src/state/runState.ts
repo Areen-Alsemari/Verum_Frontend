@@ -35,6 +35,8 @@ export interface RunState {
   expectedVsObserved: ExpectedVsObserved[]
   bundle: RunBundle | null
   error: string | null
+  /** Asset ids flagged so far by agent_finished events (undefined until any agent reports flags). */
+  flaggedAssetIds?: string[]
 }
 
 export type RunAction =

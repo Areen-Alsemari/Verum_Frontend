@@ -12,13 +12,19 @@ import { defaultControls, useRunController } from './state/useRunController'
 import type { ControlValue, ControlValues } from './api'
 import { TabBar } from './shell/TabBar'
 import { TABS, useHashRoute, type TabId } from './shell/routes'
+import { CommandCenter } from './command/CommandCenter'
+import { FacilitySummary } from './command/FacilitySummary'
+import { RunBar } from './components/RunBar'
 
-function TabPanel({ id, active, children }: { id: TabId; active: TabId; children: React.ReactNode }) {
+function TabPanel({ id, active, actions, sub, children }: { id: TabId; active: TabId; actions?: React.ReactNode; sub?: string; children: React.ReactNode }) {
   if (id !== active) return null
   const label = TABS.find((t) => t.id === id)!.label
   return (
     <section id={`panel-${id}`} role="tabpanel" aria-labelledby={`tab-${id}`} className="page" tabIndex={-1}>
-      <div className="page-head"><h2 className="page-title">{label}</h2></div>
+      <div className="page-head">
+        <div><h2 className="page-title">{label}</h2>{sub && <p className="page-sub">{sub}</p>}</div>
+        {actions}
+      </div>
       {children}
     </section>
   )
@@ -71,19 +77,28 @@ export default function App() {
       {run.status === 'stopped' && <p className="state-msg" role="status">Run stopped before it finished. Partial results are shown as they were.</p>}
     </>
   )
+  const runBar = (
+    <RunBar scenarios={scenarios} selectedId={selectedId} status={run.status} onSelect={setSelectedId}
+      onRun={() => scenario && void ctl.run(scenario, values)} onStop={ctl.stop} onMore={() => setTab('scenarios')} />
+  )
+  const failedAgents = Object.values(run.agents).filter((a) => a.state === 'error' || a.state === 'rejected').length
+  const badges: Partial<Record<TabId, { text: string; tone?: 'fail' | 'warn' | 'info' }>> = {}
+  if (failedAgents) badges.agents = { text: String(failedAgents), tone: 'fail' }
+  if (run.messages.length) badges.log = { text: String(run.messages.length) }
   const board = <AgentBoard agents={agents} run={run} selected={drawerRole} onSelect={(r) => setDrawerRole((cur) => (cur === r ? null : r))} />
 
   return (
     <div className="app">
       <div className="backdrop" aria-hidden="true" />
       <Header demoReason={demoReason} status={run.status}>
-        <TabBar active={tab} onSelect={setTab} />
+        <TabBar active={tab} onSelect={setTab} badges={badges} />
       </Header>
       <main>
-        <TabPanel id="command" active={tab}>
+        <TabPanel id="command" active={tab} actions={runBar} sub="Simulated gasoline terminal. Simulated stream (replay of recorded windows), not live plant data.">
           {runMessages}
-          {board}
-          <ResultView run={run} agents={agents} />
+          <CommandCenter agents={agents} run={run} scenario={scenario ?? undefined} simulated={client?.mode === 'mock'}
+            selectedAgent={drawerRole} onSelectAgent={(r) => setDrawerRole((cur) => (cur === r ? null : r))} onGo={setTab}
+            stage={<FacilitySummary />} />
         </TabPanel>
         <TabPanel id="scenarios" active={tab}>
           {runMessages}
@@ -105,11 +120,11 @@ export default function App() {
             </div>
           </div>
         </TabPanel>
-        <TabPanel id="agents" active={tab}>{runMessages}{board}</TabPanel>
-        <TabPanel id="log" active={tab}><MessageLog messages={run.messages} agents={agents} /></TabPanel>
-        <TabPanel id="investigation" active={tab}>{runMessages}<ResultView run={run} agents={agents} /></TabPanel>
-        <TabPanel id="inspection" active={tab}>{runMessages}<ResultView run={run} agents={agents} /></TabPanel>
-        <TabPanel id="report" active={tab}>{runMessages}<ResultView run={run} agents={agents} /></TabPanel>
+        <TabPanel id="agents" active={tab} actions={runBar}>{runMessages}{board}</TabPanel>
+        <TabPanel id="log" active={tab} actions={runBar}><MessageLog messages={run.messages} agents={agents} /></TabPanel>
+        <TabPanel id="investigation" active={tab} actions={runBar}>{runMessages}<ResultView run={run} agents={agents} /></TabPanel>
+        <TabPanel id="inspection" active={tab} actions={runBar}>{runMessages}<ResultView run={run} agents={agents} /></TabPanel>
+        <TabPanel id="report" active={tab} actions={runBar}>{runMessages}<ResultView run={run} agents={agents} /></TabPanel>
       </main>
       {drawerRole && agentsByKey[drawerRole] && (
         <AgentDrawer info={agentsByKey[drawerRole]!} st={run.agents[drawerRole]} lastTs={run.lastTs} agentsByKey={agentsByKey} onClose={() => setDrawerRole(null)} />
