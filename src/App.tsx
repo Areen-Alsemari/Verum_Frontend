@@ -13,7 +13,9 @@ import type { ControlValue, ControlValues } from './api'
 import { TabBar } from './shell/TabBar'
 import { TABS, useHashRoute, type TabId } from './shell/routes'
 import { CommandCenter } from './command/CommandCenter'
-import { FacilitySummary } from './command/FacilitySummary'
+import { FacilityView } from './facility/FacilityView'
+import { flaggedAssets } from './state/runState'
+import { usePref } from './lib/env'
 import { RunBar } from './components/RunBar'
 import { STATIC_FACILITY, facilityFromDto, snapshotMismatch, unknownIds, type Facility } from './facility'
 
@@ -40,6 +42,9 @@ export default function App() {
   const [loadError, setLoadError] = useState<string | null>(null)
   const [tab, setTab] = useHashRoute()
   const [facility, setFacility] = useState<Facility>(STATIC_FACILITY)
+  const [selectedAsset, setSelectedAsset] = useState<string | null>(null)
+  const [twoD, setTwoD] = usePref('view2d', false)
+  const [lowDetail, setLowDetail] = usePref('lowDetail', false)
 
   useEffect(() => {
     let cancelled = false
@@ -96,6 +101,12 @@ export default function App() {
       Facility mismatch · {mismatch.length}
     </span>
   )
+  const flaggedMap = new Map(flaggedAssets(run).map((f) => [f.asset, { by: f.by as string[], severity: f.severity }]))
+  const agentName = (r: string) => agentsByKey[r]?.name ?? r
+  const facilityView = (
+    <FacilityView facility={facility} flagged={flaggedMap} readings={run.sensors} selectedId={selectedAsset} onSelect={setSelectedAsset}
+      focusId={selectedAsset} twoD={twoD} onTwoD={setTwoD} lowDetail={lowDetail} onLowDetail={setLowDetail} agentName={agentName} />
+  )
   const failedAgents = Object.values(run.agents).filter((a) => a.state === 'error' || a.state === 'rejected').length
   const badges: Partial<Record<TabId, { text: string; tone?: 'fail' | 'warn' | 'info' }>> = {}
   if (failedAgents) badges.agents = { text: String(failedAgents), tone: 'fail' }
@@ -113,7 +124,7 @@ export default function App() {
           {runMessages}
           <CommandCenter agents={agents} run={run} scenario={scenario ?? undefined} simulated={client?.mode === 'mock'}
             selectedAgent={drawerRole} onSelectAgent={(r) => setDrawerRole((cur) => (cur === r ? null : r))} onGo={setTab} readings={run.status === 'idle' ? null : run.readingCount}
-            stage={<FacilitySummary />} />
+            stage={facilityView} />
         </TabPanel>
         <TabPanel id="scenarios" active={tab}>
           {runMessages}
