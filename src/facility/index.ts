@@ -100,18 +100,6 @@ export function unknownIds(f: Facility, ids: Iterable<string>): string[] {
   return out
 }
 
-/** Select options for a fault-location control, generated from the facility assets, grouped by kind. */
-export function assetOptions(f: Facility): { value: string; label: string }[] {
-  return [...f.assets]
-    .sort((a, b) => kindRank(a.kind) - kindRank(b.kind) || a.asset_id.localeCompare(b.asset_id))
-    .map((a) => ({ value: a.asset_id, label: `${a.asset_id} · ${kindLabel(a.kind)}` }))
-}
-
-/** First asset of a kind in source order (deterministic default choice). */
-export function firstOfKind(f: Facility, kind: string): FacilityAsset | undefined {
-  return f.assets.find((a) => a.kind === kind)
-}
-
 /** The asset immediately downstream of `id` along the declared flow (pipes leaving it). */
 export function downstreamPipes(f: Facility, id: string): FacilityAsset[] {
   const a = assetById(f, id)
@@ -123,20 +111,13 @@ export function downstreamPipes(f: Facility, id: string): FacilityAsset[] {
   return f.assets.filter((p) => p.graph_role === 'edge' && p.from_node && (p.from_node === id || p.from_node.startsWith(`${id}:`)))
 }
 
-/** Facility from GET /api/facility. Ids come from the API; the snapshot only fills in layout hints for matching ids. */
-export function facilityFromDto(dto: { assets: { asset_id: string; kind: string; label: string; position_hint?: number[] | null; connects_to: string[] }[]; sensors: { tag_id: string; asset_id: string | null; unit: string; label?: string }[] }, snapshot: Facility = STATIC_FACILITY): Facility {
-  const snap = new Map(snapshot.assets.map((a) => [a.asset_id, a]))
-  return {
-    ...snapshot,
-    origin: 'api',
-    assets: dto.assets.map((a) => ({ ...(snap.get(a.asset_id) ?? {}), ...a, position_hint: a.position_hint ?? snap.get(a.asset_id)?.position_hint ?? null })),
-    sensors: dto.sensors.map((s) => ({ ...(snapshot.sensors.find((x) => x.tag_id === s.tag_id) ?? {}), ...s })),
-  }
-}
-
-/** Ids in the API facility that differ from the snapshot (either direction). */
-export function snapshotMismatch(api: Facility, snapshot: Facility = STATIC_FACILITY): string[] {
-  const a = new Set([...api.assets.map((x) => x.asset_id), ...api.sensors.map((x) => x.tag_id)])
+/**
+ * Ids that GET /api/facility lists and the static layout snapshot does not, and the other way round.
+ * The service gives no drawing coordinates, so the layout always comes from the snapshot; this is how a difference shows.
+ * Tags the service withholds are not compared.
+ */
+export function serviceMismatch(api: { assets: { asset_id: string }[]; tags: { tag_id: string; status?: string }[] }, snapshot: Facility = STATIC_FACILITY): string[] {
+  const a = new Set([...api.assets.map((x) => x.asset_id), ...api.tags.filter((t) => t.status !== 'withheld').map((x) => x.tag_id)])
   const b = new Set([...snapshot.assets.map((x) => x.asset_id), ...snapshot.sensors.map((x) => x.tag_id)])
   return [...[...a].filter((x) => !b.has(x)), ...[...b].filter((x) => !a.has(x))]
 }

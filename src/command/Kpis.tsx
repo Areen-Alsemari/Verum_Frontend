@@ -16,13 +16,13 @@ export function KpiRow({ k }: { k: Kpis }) {
   return (
     <div className="kpi-row" role="group" aria-label="Key figures from the run data">
       <Card label="Agents complete" value={k.agentsComplete === null ? <Unknown what="agents complete" /> : <>{k.agentsComplete}<small> / {k.agentsTotal}</small></>}
-        sub="agents that finished with status Complete" />
-      <Card label="Open issues" tone={k.openIssues ? 'warn' : undefined} value={k.openIssues === null ? <Unknown what="open issues" /> : k.openIssues}
-        sub="issue codes raised by agents" />
-      <Card label="Flagged assets" tone={k.flaggedAssets ? 'accent' : undefined} value={k.flaggedAssets === null ? <Unknown what="flagged assets" /> : k.flaggedAssets}
-        sub="assets flagged by agents" />
+        sub="agents with status Complete in the latest window" />
+      <Card label="Issue codes" tone={k.issueCodes ? 'warn' : undefined} value={k.issueCodes === null ? <Unknown what="issue codes" /> : k.issueCodes}
+        sub="runner issue codes in the latest window" />
+      <Card label="Alerts" tone={k.alerts ? 'accent' : undefined} value={k.alerts === null ? <Unknown what="alerts" /> : k.alerts}
+        sub="persistence rule alerts so far" />
       <Card label="Decision state" value={k.decisionState === null ? <Unknown what="decision state" /> : <span className="kpi-text" title={k.decisionState}>{label(k.decisionState)}</span>}
-        sub="set by Evidence Verification & Decision" />
+        sub="Agent 8, latest window" />
     </div>
   )
 }

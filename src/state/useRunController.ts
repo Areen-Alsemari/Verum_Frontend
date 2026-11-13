@@ -1,130 +1,75 @@
-import { useCallback, useEffect, useReducer, useRef, useState } from 'react'
-import type { AgentInfo, ApiClient, ControlValues, ExpectedVsObserved, RunEvent, RunStream, Scenario } from '../api'
+import { useCallback, useEffect, useReducer, useRef } from 'react'
+import { createRun, getReport, getTruth, openStream, type RunStream } from '../api/client'
+import type { CreateRunRequest } from '../api/serviceTypes'
+import { describeError } from '../lib/service'
 import { initialRunState, runReducer } from './runState'
 
-export interface ScenarioResult {
-  runId: string
-  decision: string | null
-  verified: boolean | null
-  checks: ExpectedVsObserved[]
-}
-
-export interface RunAllProgress { index: number; total: number }
-
-export function defaultControls(s: Scenario): ControlValues {
-  const out: ControlValues = {}
-  for (const c of s.controls) out[c.id] = c.default
-  return out
-}
-
-/** Owns the active run: starts it, feeds events to the reducer, supports step mode, stop and run-all. */
-export function useRunController(client: ApiClient | null, agents: AgentInfo[], scenarios: Scenario[]) {
-  const [state, dispatch] = useReducer(runReducer, agents, initialRunState)
-  const [stepMode, setStepMode] = useState(false)
-  const [queued, setQueued] = useState(0)
-  const [activeScenarioId, setActiveScenarioId] = useState<string | null>(null)
-  const [results, setResults] = useState<Record<string, ScenarioResult>>({})
-  const [runAll, setRunAll] = useState<RunAllProgress | null>(null)
-
+/** Owns the active run: creates it, feeds the stream into the reducer, and loads the report and truth after `done`. */
+export function useRunController() {
+  const [state, dispatch] = useReducer(runReducer, undefined, initialRunState)
   const streamRef = useRef<RunStream | null>(null)
-  const queueRef = useRef<RunEvent[]>([])
-  const settleRef = useRef<(() => void) | null>(null)
-  const cancelAllRef = useRef(false)
-  const agentsRef = useRef(agents)
-  const applyRef = useRef<((ev: RunEvent) => void) | null>(null)
+  const fetchedFor = useRef<string | null>(null)
 
-  useEffect(() => {
-    agentsRef.current = agents
-    dispatch({ type: 'reset', agents })
-  }, [agents])
-
-  const teardown = useCallback(() => {
+  const close = useCallback(() => {
     streamRef.current?.close()
     streamRef.current = null
-    queueRef.current = []
-    setQueued(0)
-    settleRef.current?.()
-    settleRef.current = null
   }, [])
+  useEffect(() => close, [close])
 
-  useEffect(() => teardown, [teardown])
-
-  const startOne = useCallback(async (scenario: Scenario, controls: ControlValues, step: boolean): Promise<void> => {
-    if (!client) return
-    teardown()
-    dispatch({ type: 'reset', agents: agentsRef.current })
-    dispatch({ type: 'begin', scenarioId: scenario.id })
-    setActiveScenarioId(scenario.id)
-    setStepMode(step)
-    let runId: string
+  const start = useCallback(async (req: CreateRunRequest) => {
+    close()
+    fetchedFor.current = null
+    dispatch({ type: 'starting' })
+    let run
     try {
-      runId = (await client.startRun({ scenario_id: scenario.id, controls })).run_id
+      run = await createRun(req)
     } catch (e) {
-      dispatch({ type: 'failed', error: `Could not start the run: ${e instanceof Error ? e.message : String(e)}` })
+      dispatch({ type: 'failed', error: `The run could not be created. ${describeError(e)}` })
       return
     }
-    await new Promise<void>((resolve) => {
-      settleRef.current = resolve
-      const apply = (ev: RunEvent) => {
-        dispatch({ type: 'event', event: ev })
-        if (ev.type === 'run_finished') {
-          setResults((r) => ({
-            ...r,
-            [scenario.id]: { runId, decision: ev.final_decision_state, verified: ev.verified, checks: ev.expected_vs_observed },
-          }))
-          client.getRun(runId)
-            .then((bundle) => {
-              dispatch({ type: 'bundle', bundle })
-              return client.getReport(runId).then((report) => dispatch({ type: 'report', report }), () => dispatch({ type: 'report', report: null }))
-            })
-            .catch((e) => dispatch({ type: 'failed', error: `Could not load the result bundle: ${e instanceof Error ? e.message : String(e)}` }))
-            .finally(() => { settleRef.current?.(); settleRef.current = null })
-        }
-      }
-      const onEvent = (ev: RunEvent) => {
-        if (step) {
-          queueRef.current.push(ev)
-          setQueued(queueRef.current.length)
-        } else apply(ev)
-      }
-      applyRef.current = apply
-      streamRef.current = client.streamEvents(runId, onEvent, (err) => {
-        dispatch({ type: 'failed', error: err.message })
-        teardown()
-      })
+    dispatch({ type: 'created', run })
+    streamRef.current = openStream(run.run_id, {
+      onEvent: (event) => dispatch({ type: 'event', event }),
+      onConnection: (s) => {
+        dispatch({ type: 'connection', state: s })
+        if (s === 'lost') dispatch({ type: 'failed', error: 'The connection to the service was lost and could not be restored.' })
+      },
+      onMalformed: () => dispatch({ type: 'malformed' }),
     })
-  }, [client, teardown])
-
-
-  const run = useCallback((s: Scenario, c: ControlValues) => { cancelAllRef.current = true; return startOne(s, c, false) }, [startOne])
-  const runStepwise = useCallback((s: Scenario, c: ControlValues) => { cancelAllRef.current = true; return startOne(s, c, true) }, [startOne])
-
-  const next = useCallback(() => {
-    const ev = queueRef.current.shift()
-    setQueued(queueRef.current.length)
-    if (ev) applyRef.current?.(ev)
-  }, [])
+  }, [close])
 
   const stop = useCallback(() => {
-    cancelAllRef.current = true
-    teardown()
+    close()
     dispatch({ type: 'stopped' })
-    setRunAll(null)
-  }, [teardown])
+  }, [close])
 
-  const runEvery = useCallback(async () => {
-    cancelAllRef.current = false
-    setResults({})
-    for (let i = 0; i < scenarios.length; i++) {
-      if (cancelAllRef.current) break
-      setRunAll({ index: i, total: scenarios.length })
-      const s = scenarios[i]!
-      await startOne(s, defaultControls(s), false)
-      if (cancelAllRef.current) break
-      await new Promise((r) => setTimeout(r, 500))
+  const loadReport = useCallback(async (runId: string, window?: number) => {
+    dispatch({ type: 'report', report: { state: 'loading' } })
+    try {
+      const r = await getReport(runId, window)
+      if (r.state === 'pending') dispatch({ type: 'report', report: { state: 'pending' } })
+      else dispatch({ type: 'report', report: { state: 'ok', window: r.data.window_index, windowsAvailable: r.data.windows_available ?? [], report: r.data.report } })
+    } catch (e) {
+      dispatch({ type: 'report', report: { state: 'error', message: describeError(e) } })
     }
-    setRunAll(null)
-  }, [scenarios, startOne])
+  }, [])
 
-  return { state, stepMode, queued, activeScenarioId, results, runAll, run, runStepwise, next, stop, runEvery }
+  // after the run is done: the report (default: last window) and, only if asked for, the simulation truth
+  const runId = state.run?.run_id ?? null
+  const finished = state.done?.status === 'completed'
+  const revealTruth = state.run?.reveal_truth === true
+  useEffect(() => {
+    if (!runId || !finished || fetchedFor.current === runId) return
+    fetchedFor.current = runId
+    void loadReport(runId)
+    if (revealTruth) {
+      dispatch({ type: 'truth', truth: { state: 'loading' } })
+      getTruth(runId).then(
+        (t) => dispatch({ type: 'truth', truth: t.state === 'ok' ? { state: 'ok', truth: t.data } : { state: 'unavailable', message: t.message } }),
+        (e) => dispatch({ type: 'truth', truth: { state: 'error', message: describeError(e) } }),
+      )
+    }
+  }, [runId, finished, revealTruth, loadReport])
+
+  return { state, start, stop, loadReport }
 }

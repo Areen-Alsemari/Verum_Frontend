@@ -62,6 +62,7 @@ const CODES: Record<string, string> = {
   NOISE_HIGH: 'Noise too high',
   HISTORY_UNAVAILABLE: 'History unavailable',
   // decision flags (API field names)
+  advisory_only: 'Advisory only',
   human_decision_required: 'Human decision required',
   automatic_action_authorized: 'Automatic action authorised',
   equipment_condition_confirmed: 'Equipment condition confirmed',
@@ -72,7 +73,7 @@ const CODES: Record<string, string> = {
 
 /** Readable label for one code or field name. Unknown codes are turned into plain words. */
 export function label(code: string | null | undefined): string {
-  if (code === null || code === undefined || code === '') return 'unknown'
+  if (code === null || code === undefined || code === '') return 'not available'
   if (CODES[code]) return CODES[code]!
   if (ROLE_NAMES[code]) return ROLE_NAMES[code]!
   if (!/[_]/.test(code)) return code

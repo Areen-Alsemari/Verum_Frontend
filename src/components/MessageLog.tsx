@@ -1,49 +1,44 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import type { AgentInfo, MessageKind } from '../api'
-import { formatTs } from '../lib/format'
-import { humanText } from '../lib/labels'
-import { Select } from './Select'
-import type { LoggedMessage } from '../state/runState'
+import { EVENT_TYPES, type ServiceEvent } from '../api'
+import { label } from '../lib/labels'
 
-const KINDS: MessageKind[] = ['request', 'response', 'attachment', 'issue']
-const KIND_COLOR: Record<MessageKind, string> = {
-  request: 'var(--blue)', response: 'var(--amber-hi)', attachment: 'var(--champagne)', issue: 'var(--orange)',
+const TYPE_COLOR: Record<string, string> = {
+  sensor_reading: 'var(--blue)', window_result: 'var(--amber-hi)', alert: 'var(--orange)', done: 'var(--champagne)',
 }
 
-interface Props { messages: LoggedMessage[]; agents: AgentInfo[] }
+/** One line per event, from the event itself. */
+export function eventSummary(e: ServiceEvent): string {
+  switch (e.type) {
+    case 'sensor_reading': return `Window ${e.window_index}: ${e.readings?.length ?? 0} readings (as of ${e.as_of_s} s)`
+    case 'window_result': {
+      const n = Object.keys(e.agents ?? {}).length
+      return `Window ${e.window_index}: ${n} agent statuses, decision ${e.decision?.decision_state ? label(e.decision.decision_state) : 'not available'}`
+    }
+    case 'alert': return `Window ${e.window_index}: ${e.message}`
+    case 'done': return `Run ${e.status} after ${e.windows} windows${e.error_type ? ` (${e.error_type})` : ''}`
+  }
+}
 
-export function MessageLog({ messages, agents }: Props) {
-  const [agentFilter, setAgentFilter] = useState('all')
-  const [kinds, setKinds] = useState<Set<MessageKind>>(new Set(KINDS))
+interface Props { events: ServiceEvent[]; malformed: number }
+
+/** Every event received from the stream, in arrival order. The service sends no agent-to-agent messages. */
+export function MessageLog({ events, malformed }: Props) {
+  const [types, setTypes] = useState<Set<string>>(new Set(EVENT_TYPES))
   const [autoScroll, setAutoScroll] = useState(true)
   const [open, setOpen] = useState<Set<number>>(new Set())
   const [copied, setCopied] = useState<'idle' | 'done' | 'failed'>('idle')
   const listRef = useRef<HTMLOListElement>(null)
 
-  const nameOf = useMemo(() => {
-    const m: Record<string, string> = { runner: 'Runner' }
-    for (const a of agents) m[a.role_key] = `${a.order}. ${a.name}`
-    return m
-  }, [agents])
-
-  const shown = useMemo(
-    () => messages.filter((m) => kinds.has(m.kind) && (agentFilter === 'all' || m.from === agentFilter || m.to === agentFilter)),
-    [messages, kinds, agentFilter],
-  )
-
+  const shown = useMemo(() => events.filter((e) => types.has(e.type)), [events, types])
   useEffect(() => {
     if (autoScroll && listRef.current) listRef.current.scrollTop = listRef.current.scrollHeight
   }, [shown.length, autoScroll])
 
-  const toggleKind = (k: MessageKind) =>
-    setKinds((cur) => { const n = new Set(cur); if (n.has(k)) n.delete(k); else n.add(k); return n })
-  const toggleOpen = (seq: number) =>
-    setOpen((cur) => { const n = new Set(cur); if (n.has(seq)) n.delete(seq); else n.add(seq); return n })
-
+  const toggleType = (t: string) => setTypes((cur) => { const n = new Set(cur); if (n.has(t)) n.delete(t); else n.add(t); return n })
+  const toggleOpen = (seq: number) => setOpen((cur) => { const n = new Set(cur); if (n.has(seq)) n.delete(seq); else n.add(seq); return n })
   const copy = async () => {
-    const text = JSON.stringify(shown.map((m) => ({ ts: m.ts, from: m.from, to: m.to, kind: m.kind, summary: m.summary, payload: m.payload })), null, 2)
     try {
-      await navigator.clipboard.writeText(text)
+      await navigator.clipboard.writeText(JSON.stringify(shown, null, 2))
       setCopied('done')
     } catch {
       setCopied('failed')
@@ -54,49 +49,39 @@ export function MessageLog({ messages, agents }: Props) {
   return (
     <section className="panel log" aria-labelledby="log-h">
       <div className="log-top">
-        <h2 id="log-h" className="label">Message log</h2>
-        <span className="control-help" role="status">{shown.length} of {messages.length} shown</span>
+        <h2 id="log-h" className="label">Event log</h2>
+        <span className="control-help" role="status">{shown.length} of {events.length} shown{malformed > 0 ? ` · ${malformed} unreadable event${malformed === 1 ? '' : 's'} skipped` : ''}</span>
       </div>
       <div className="log-tools">
-        <label className="log-field">
-          <span className="sr-only">Filter by agent</span>
-          <Select label="Filter by agent" hideLabel value={agentFilter} onChange={setAgentFilter}
-            options={[{ value: 'all', label: 'All agents and runner' }, { value: 'runner', label: 'Runner' }, ...agents.map((a) => ({ value: a.role_key, label: `${a.order}. ${a.name}` }))]} />
-        </label>
-        <div className="kind-filters" role="group" aria-label="Filter by message kind">
-          {KINDS.map((k) => (
-            <button key={k} type="button" aria-pressed={kinds.has(k)} className={`kind-filter${kinds.has(k) ? ' is-on' : ''}`}
-              style={{ ['--k' as string]: KIND_COLOR[k] }} onClick={() => toggleKind(k)}>{k}</button>
+        <div className="kind-filters" role="group" aria-label="Filter by event type">
+          {EVENT_TYPES.map((t) => (
+            <button key={t} type="button" aria-pressed={types.has(t)} className={`kind-filter${types.has(t) ? ' is-on' : ''}`}
+              style={{ ['--k' as string]: TYPE_COLOR[t] }} onClick={() => toggleType(t)}>{t}</button>
           ))}
         </div>
-        <button type="button" className="btn btn-ghost" aria-pressed={!autoScroll} onClick={() => setAutoScroll((a) => !a)}>
-          {autoScroll ? 'Pause scroll' : 'Resume scroll'}
-        </button>
+        <button type="button" className="btn btn-ghost" aria-pressed={!autoScroll} onClick={() => setAutoScroll((a) => !a)}>{autoScroll ? 'Pause scroll' : 'Resume scroll'}</button>
         <button type="button" className="btn btn-ghost" onClick={copy} disabled={shown.length === 0}>
           {copied === 'done' ? 'Copied' : copied === 'failed' ? 'Copy failed' : 'Copy as JSON'}
         </button>
       </div>
-      {messages.length === 0 ? (
-        <p className="state-msg">No messages yet. Start a run to see the runner and agents talk.</p>
+      {events.length === 0 ? (
+        <p className="state-msg">No events yet. Start a run to see its events arrive.</p>
       ) : shown.length === 0 ? (
-        <p className="state-msg">No messages match the current filters.</p>
+        <p className="state-msg">No events match the current filter.</p>
       ) : (
-        <ol className="log-list" ref={listRef} aria-label="Messages in arrival order">
-          {shown.map((m) => {
-            const isOpen = open.has(m.seq)
-            const failIssue = m.kind === 'issue' && (m.payload as { severity?: string } | null)?.severity === 'error'
+        <ol className="log-list" ref={listRef} aria-label="Events in arrival order">
+          {shown.map((e) => {
+            const isOpen = open.has(e.seq)
             return (
-              <li key={m.seq} className={`log-row${failIssue ? ' is-fail' : ''}`} style={{ ['--k' as string]: failIssue ? 'var(--red)' : KIND_COLOR[m.kind] }}>
+              <li key={e.seq} className="log-row" style={{ ['--k' as string]: TYPE_COLOR[e.type] }}>
                 <div className="log-line">
-                  <span className="log-ts">{formatTs(m.ts)}</span>
-                  <span className="log-kind">{m.kind}</span>
-                  <span className="log-route">{nameOf[m.from] ?? m.from} <span aria-label="to">→</span> {nameOf[m.to] ?? m.to}</span>
+                  <span className="log-ts">#{e.seq}</span>
+                  <span className="log-kind">{e.type}</span>
+                  <span className="log-route">{e.mode}</span>
                 </div>
-                <p className="log-summary">{humanText(m.summary)}</p>
-                <button type="button" className="log-more" aria-expanded={isOpen} onClick={() => toggleOpen(m.seq)}>
-                  {isOpen ? 'Hide payload' : 'Show payload'}
-                </button>
-                {isOpen && <pre className="log-json">{m.payload === undefined ? 'undefined' : JSON.stringify(m.payload, null, 2)}</pre>}
+                <p className="log-summary">{eventSummary(e)}</p>
+                <button type="button" className="log-more" aria-expanded={isOpen} onClick={() => toggleOpen(e.seq)}>{isOpen ? 'Hide event' : 'Show event'}</button>
+                {isOpen && <pre className="log-json">{JSON.stringify(e, null, 2)}</pre>}
               </li>
             )
           })}

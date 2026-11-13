@@ -2,7 +2,6 @@ import { fireEvent, render, screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 import { Select } from '../src/components/Select'
 import { CommandCenter } from '../src/command/CommandCenter'
-import { AGENTS } from '../src/api/mock/data'
 import { initialRunState } from '../src/state/runState'
 
 const opts = [
@@ -55,7 +54,7 @@ describe('Verum select', () => {
 
 describe('command center before a run', () => {
   it('does not show an empty operations briefing', () => {
-    render(<CommandCenter agents={AGENTS} run={initialRunState(AGENTS)} scenario={undefined} simulated selectedAgent={null} onSelectAgent={() => {}} onGo={() => {}} stage={null} />)
+    render(<CommandCenter run={initialRunState()} selectedAgent={null} onSelectAgent={() => {}} onGo={() => {}} stage={null} />)
     expect(screen.queryByText('Operations briefing')).toBeNull()
   })
 })

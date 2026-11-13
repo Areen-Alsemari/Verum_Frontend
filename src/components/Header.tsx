@@ -2,7 +2,6 @@ import { useEffect, useState, type ReactNode } from 'react'
 import type { RunStatus } from '../state/runState'
 
 interface Props {
-  demoReason: string | null
   status: RunStatus
   /** the tab bar */
   children?: ReactNode
@@ -11,10 +10,10 @@ interface Props {
 }
 
 const STATUS_TEXT: Record<RunStatus, string> = {
-  idle: 'Ready', running: 'Running', finished: 'Run finished', stopped: 'Stopped', failed: 'Run failed',
+  idle: 'Ready', starting: 'Starting', running: 'Running', finished: 'Run finished', stopped: 'Stopped', failed: 'Run failed',
 }
 
-export function Header({ demoReason, status, children, extra }: Props) {
+export function Header({ status, children, extra }: Props) {
   // fully opaque once content scrolls under it, so the tabs stay readable
   const [scrolled, setScrolled] = useState(false)
   useEffect(() => {
@@ -40,11 +39,6 @@ export function Header({ demoReason, status, children, extra }: Props) {
             {STATUS_TEXT[status]}
           </span>
           {extra}
-          {demoReason !== null && (
-            <span className="badge-demo" title={demoReason} tabIndex={0} aria-label={`Demo data. ${demoReason}`}>
-              Demo data
-            </span>
-          )}
         </div>
       </div>
     </header>

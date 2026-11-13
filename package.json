@@ -10,10 +10,7 @@
     "typecheck": "tsc -b --noEmit",
     "lint": "eslint .",
     "test": "vitest run",
-    "screenshots": "node scripts/screenshots.mjs",
     "assets": "python3 -I scripts/process_brand_assets.py",
-    "pdfs": "node scripts/report-pdfs.mjs screenshots",
-    "perf": "node scripts/perf.mjs",
     "facility": "python3 -I scripts/extract-facility.py --verum"
   },
   "dependencies": {

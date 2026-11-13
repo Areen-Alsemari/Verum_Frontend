@@ -1,7 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { SCENARIOS } from '../src/api/mock/data'
-import { buildMockRun } from '../src/api/mock/engine'
-import { STATIC_FACILITY as F, assetOptions, unknownIds } from '../src/facility'
+import { STATIC_FACILITY as F, serviceMismatch, unknownIds } from '../src/facility'
 
 describe('facility snapshot', () => {
   it('holds the 49 declared assets and 30 tags of the reference terminal', () => {
@@ -29,21 +27,13 @@ describe('facility snapshot', () => {
     for (const a of F.assets) expect(a.position_hint).toHaveLength(3)
   })
 
-  it('generates the fault-location control from the facility, not a fixed list', () => {
-    const ctl = SCENARIOS.find((s) => s.id === 'developing_fault')!.controls.find((c) => c.id === 'fault_location')!
-    expect(ctl.options).toEqual(assetOptions(F))
-    expect(ctl.options).toHaveLength(49)
-  })
-
   it('reports ids from a run that the facility does not know', () => {
     expect(unknownIds(F, ['TK-101', 'FT-001', 'storage_tank'])).toEqual(['storage_tank'])
   })
 
-  it('mock runs only use facility ids', () => {
-    for (const s of SCENARIOS) {
-      const { bundle } = buildMockRun('x', s.id, {})
-      const ids = [...bundle.flagged_assets.map((f) => f.asset), ...bundle.inspection_options.flatMap((o) => o.targets)]
-      expect(unknownIds(F, ids)).toEqual([])
-    }
+  it('compares service ids with the layout snapshot in both directions and ignores withheld tags', () => {
+    const api = { assets: F.assets.map((a) => ({ asset_id: a.asset_id })).filter((a) => a.asset_id !== 'TK-101').concat([{ asset_id: 'NEW-1' }]),
+      tags: [...F.sensors.map((s) => ({ tag_id: s.tag_id, status: 'emit' })), { tag_id: 'XX-9', status: 'withheld' }] }
+    expect(serviceMismatch(api)).toEqual(['NEW-1', 'TK-101'])
   })
 })

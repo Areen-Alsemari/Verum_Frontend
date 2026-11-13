@@ -449,3 +449,17 @@
 .decision-panel .roles li > span { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .decision-panel .roles li .control-help { margin: 0; }
 .decision-panel .roles .role-img { width: 40px; height: 40px; }
+
+/* run bar, mode bar and service message */
+.run-bar { flex-wrap: wrap; }
+.run-bar .vsel { flex: 0 1 220px; display: flex; flex-direction: column; align-items: stretch; gap: 4px; }
+.run-bar .vsel-list { width: auto; min-width: 240px; }
+.run-bar .check { display: flex; gap: 8px; align-items: center; color: var(--muted); font-size: 13px; }
+.run-bar-note { flex-basis: 100%; margin: 0; }
+.mode-bar { display: flex; flex-wrap: wrap; gap: 8px 22px; align-items: center; padding: 8px 24px; border-bottom: 1px solid var(--glass-border); background: rgba(10,10,12,0.72); font-size: 13px; color: var(--muted); }
+.mode-item { display: inline-flex; gap: 8px; align-items: baseline; }
+.mode-val { text-transform: uppercase; letter-spacing: 0.12em; color: var(--amber-hi); }
+.mode-note { max-width: 62ch; }
+.mode-conn { margin-left: auto; padding: 2px 10px; border-radius: 999px; border: 1px solid var(--line-strong); }
+.mode-conn.conn-reconnecting, .mode-conn.conn-lost { border-color: var(--red); color: var(--red); }
+.service-down .cmd { overflow-x: auto; padding: 10px 12px; border-radius: 8px; background: rgba(0,0,0,0.4); user-select: all; }

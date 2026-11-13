@@ -101,7 +101,7 @@ export function Select({ value, options, onChange, label, hideLabel = false, dis
       >
         {prefix}
         <span className="vsel-value">
-          <span className="vsel-text">{selected?.label ?? 'unknown'}</span>
+          <span className="vsel-text">{selected?.label ?? 'none selected'}</span>
         </span>
         {selected?.badge && <span className="kind-badge" style={{ ['--kind' as string]: selected.badge.color }}>{selected.badge.text}</span>}
         <svg className="vsel-chev" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg>

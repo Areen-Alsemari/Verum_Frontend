@@ -1,21 +1,17 @@
 import { useEffect, useRef } from 'react'
-import type { AgentInfo } from '../api'
-import { STATE_COLOR, STATE_LABEL } from '../lib/agentState'
-import { formatMs } from '../lib/format'
-import { elapsedMs, type AgentRunState } from '../state/runState'
+import { STATE_COLOR, isFailure, statusText } from '../lib/agentState'
+import { label } from '../lib/labels'
+import type { AgentInfo, AgentRunState } from '../state/runState'
 import { AgentIcon } from './AgentIcon'
 import { Unknown } from './Unknown'
-import { humanText, label } from '../lib/labels'
 
 interface Props {
   info: AgentInfo
   st: AgentRunState | undefined
-  lastTs: number
-  agentsByKey: Record<string, AgentInfo>
   onClose: () => void
 }
 
-export function AgentDrawer({ info, st, lastTs, agentsByKey, onClose }: Props) {
+export function AgentDrawer({ info, st, onClose }: Props) {
   const closeRef = useRef<HTMLButtonElement>(null)
   useEffect(() => {
     closeRef.current?.focus()
@@ -25,52 +21,35 @@ export function AgentDrawer({ info, st, lastTs, agentsByKey, onClose }: Props) {
   }, [onClose])
 
   const state = st?.state ?? 'idle'
-  const finished = st?.report !== undefined
+  const got = state !== 'idle'
   return (
     <aside className="drawer" role="dialog" aria-modal="false" aria-labelledby="drawer-h" style={{ ['--st' as string]: STATE_COLOR[state] }}>
       <div className="drawer-head">
         <span className="agent-ico"><AgentIcon role={info.role_key} size={26} /></span>
         <div>
           <h3 id="drawer-h" className="drawer-title">{info.order}. {info.name}</h3>
-          <p className="agent-state"><span className="state-dot" aria-hidden="true" />{STATE_LABEL[state]}</p>
+          <p className="agent-state"><span className="state-dot" aria-hidden="true" />{statusText(state, st?.status)}</p>
         </div>
         <button ref={closeRef} type="button" className="btn btn-ghost drawer-close" onClick={onClose} aria-label="Close details">Close</button>
       </div>
-      <p className="control-help">{info.description}</p>
       <dl className="drawer-list">
-        <dt>Time</dt><dd>{(st && formatMs(elapsedMs(st, lastTs))) ?? <Unknown what="elapsed time" />}</dd>
-        <dt>Reads reports from</dt>
-        <dd>{(info.depends_on ?? []).length ? info.depends_on!.map((k) => agentsByKey[k]?.name ?? k).join(', ') : 'nothing (first stage)'}</dd>
+        <dt>Role key</dt><dd><code>{info.role_key}</code></dd>
+        <dt>Window</dt><dd>{st?.windowIndex ?? <Unknown what="window" />}</dd>
+        <dt>Status as received</dt><dd>{!got ? <Unknown what="status" /> : st!.status === null ? 'none (the service sent no status)' : <code>{st!.status}</code>}</dd>
+        <dt>Report id</dt><dd>{st?.reportId ? <code>{st.reportId}</code> : <Unknown what="report id" />}</dd>
+        <dt>Timing</dt><dd><Unknown what="timing" /></dd>
+        <dt>Report text</dt><dd><Unknown what="agent report text" /></dd>
       </dl>
-
-      <h4 className="label">Report summary</h4>
-      {!finished && <p className="control-help">Not finished yet.</p>}
-      {finished && st!.report === null && <p className="null-report">No report was returned.</p>}
-      {finished && st!.report !== null && <p className="drawer-text">{humanText(st!.report)}</p>}
-
-      <h4 className="label">Flagged assets</h4>
-      {!finished ? <p className="control-help">Not finished yet.</p>
-        : st!.flagged === undefined ? <p><Unknown what="flagged assets" /></p>
-        : st!.flagged.length === 0 ? <p className="control-help">None.</p>
-        : <p className="chips">{st!.flagged.map((id) => <code key={id} className="chip">{id}</code>)}</p>}
-
-      <h4 className="label">Issues</h4>
-      {!finished && <p className="control-help">Not finished yet.</p>}
-      {finished && st!.issues.length === 0 && <p className="control-help">None reported.</p>}
-      {st?.issues.map((i, k) => (
-        <div key={k} className={`issue${st.state === 'error' || st.state === 'rejected' ? ' is-fail' : ''}`}>
-          <span className="issue-code">{label(i.code)}</span>
-          {i.severity && <span className="issue-sev">{label(i.severity)}</span>}
-          <span className="issue-raw">code {i.code}</span>
-          {i.message && <p>{humanText(i.message)}</p>}
+      <h4 className="label">Runner issue codes</h4>
+      {!got && <p className="control-help">No window result yet.</p>}
+      {got && st!.issueCodes.length === 0 && <p className="control-help">None reported.</p>}
+      {st?.issueCodes.map((c) => (
+        <div key={c} className={`issue${isFailure(state) ? ' is-fail' : ''}`}>
+          <span className="issue-code">{label(c)}</span>
+          <span className="issue-raw">code {c}</span>
         </div>
       ))}
-
-      <h4 className="label">Consumed reports</h4>
-      {!finished && <p className="control-help">Not finished yet.</p>}
-      {finished && (st!.consumed.length === 0
-        ? <p className="control-help">None.</p>
-        : <p className="chips">{st!.consumed.map((id) => <code key={id} className="chip">{id}</code>)}</p>)}
+      {got && isFailure(state) && <p className="null-report">No report was returned.</p>}
     </aside>
   )
 }

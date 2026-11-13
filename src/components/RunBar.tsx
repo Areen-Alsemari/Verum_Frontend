@@ -1,41 +1,52 @@
-import type { Scenario } from '../api'
-import { KIND_COLOR, KIND_LABEL } from '../lib/format'
-import { humanText } from '../lib/labels'
+import type { Episode, RunMode } from '../api'
 import type { RunStatus } from '../state/runState'
 import { Select } from './Select'
 
+export const SPEEDS = [60, 300, 1000, 10000, 1000000]
+
 interface Props {
-  scenarios: Scenario[]
-  selectedId: string | null
+  mode: RunMode
+  onMode: (m: RunMode) => void
+  modes: { replay: boolean; live: boolean } | null
+  episodes: Episode[] | null
+  episodesError: string | null
+  episodeId: string
+  onEpisode: (id: string) => void
+  speed: number
+  onSpeed: (n: number) => void
+  revealTruth: boolean
+  onRevealTruth: (v: boolean) => void
   status: RunStatus
-  onSelect: (id: string) => void
+  serviceUp: boolean
   onRun: () => void
   onStop: () => void
-  onMore: () => void
-  /** step-by-step mode: the Next event button lives here so the run can be watched with the card closed */
-  stepMode?: boolean
-  queued?: number
-  onNext?: () => void
 }
 
-/** Command center scenario switcher with Run, Stop and All controls. */
-export function RunBar({ scenarios, selectedId, status, onSelect, onRun, onStop, onMore, stepMode = false, queued = 0, onNext }: Props) {
-  const running = status === 'running'
-  const options = scenarios.map((s) => ({
-    value: s.id, label: s.title, description: humanText(s.description),
-    badge: { text: KIND_LABEL[s.kind], color: KIND_COLOR[s.kind] },
+/** Mode, episode, playback speed and run buttons. */
+export function RunBar(p: Props) {
+  const running = p.status === 'running' || p.status === 'starting'
+  const modeOptions = (['replay', 'live'] as const).map((m) => ({
+    value: m, label: m === 'replay' ? 'Replay' : 'Live',
+    description: p.modes && !p.modes[m] ? 'Not enabled on this service' : m === 'replay' ? 'Plays stored windows of the sample' : 'Runs the agents on a validation episode',
   }))
+  const epOptions = [{ value: '', label: 'Default (most windows)', description: 'The service picks the episode with the most windows' }, ...(p.episodes ?? []).map((e) => ({ value: e.episode_id, label: e.episode_id, description: `${e.split}, ${e.windows} window${e.windows === 1 ? '' : 's'}` }))]
+  const canRun = p.serviceUp && !running && p.episodes !== null && p.episodes.length > 0 && (p.modes ? p.modes[p.mode] : true)
   return (
-    <div className="scenario-bar glass" role="group" aria-label="Scenario and run controls">
-      <Select id="scenario-switch" variant="hero" label="Scenario" value={selectedId ?? ''} options={options} disabled={running || options.length === 0} onChange={onSelect} />
+    <div className="scenario-bar glass run-bar" role="group" aria-label="Run controls">
+      <Select id="run-mode" label="Mode" value={p.mode} options={modeOptions} disabled={running || !p.serviceUp} onChange={(v) => p.onMode(v as RunMode)} />
+      <Select id="run-episode" label="Episode" value={p.episodeId} options={epOptions} disabled={running || !p.episodes || p.episodes.length === 0} onChange={p.onEpisode} />
+      <Select id="run-speed" label="Speed (time compression)" value={String(p.speed)}
+        options={SPEEDS.map((n) => ({ value: String(n), label: `×${new Intl.NumberFormat('en-US').format(n)}` }))}
+        disabled={running} onChange={(v) => p.onSpeed(Number(v))} />
+      <label className="check">
+        <input type="checkbox" checked={p.revealTruth} disabled={running} onChange={(e) => p.onRevealTruth(e.target.checked)} />
+        <span>Reveal simulation truth after the run</span>
+      </label>
       <div className="scenario-actions">
-        <button type="button" className="btn btn-primary" disabled={running || !selectedId} onClick={onRun}>Run</button>
-        {running && stepMode && (
-          <button type="button" className="btn" disabled={queued === 0} onClick={onNext}>Next event ({queued} waiting)</button>
-        )}
-        <button type="button" className="btn btn-danger" disabled={!running} onClick={onStop}>Stop</button>
-        <button type="button" className="btn btn-ghost" aria-haspopup="dialog" onClick={onMore}>All controls</button>
+        <button type="button" className="btn btn-primary" disabled={!canRun} onClick={p.onRun}>Run</button>
+        <button type="button" className="btn btn-danger" disabled={!running} onClick={p.onStop} title="Stops watching. The service has no stop route, so it may keep running the run.">Stop watching</button>
       </div>
+      {p.episodesError && <p className="control-help run-bar-note" role="status">{p.episodesError}</p>}
     </div>
   )
 }

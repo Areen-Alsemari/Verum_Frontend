@@ -4,11 +4,11 @@ export function isMissing(v: unknown): boolean {
   return v === null || v === undefined || v === '' || (typeof v === 'number' && Number.isNaN(v))
 }
 
-/** The hatched "unknown" marker. Used for every missing value; never 0, 0%, "healthy" or blank. */
+/** The hatched "not available" marker. Used for every missing value; never 0, 0%, "healthy" or blank. */
 export function Unknown({ what }: { what?: string }) {
   return (
     <span className="unknown" title={what ? `${what}: not provided` : 'not provided'}>
-      unknown
+      not available
     </span>
   )
 }

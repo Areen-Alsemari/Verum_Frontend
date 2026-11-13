@@ -1,190 +1,202 @@
+import type { ConnectionState } from '../api/client'
 import type {
-  AgentInfo, AgentStatus, ExpectedVsObserved, Issue, MaintenanceReport, RoleKey, RunBundle, RunEvent, RunMessageEvent, SignalQuality,
-} from '../api/types'
+  AlertEvent, Decision, DoneEvent, MaintenanceReport, Persistence, RunInfo, RunMode, ServiceEvent, TimeCompression, TruthResponse,
+} from '../api/serviceTypes'
+import { agentUiState, type AgentUiState } from '../lib/agentState'
+import { label } from '../lib/labels'
 
-export type AgentUiState = 'idle' | 'running' | 'complete' | 'degraded' | 'insufficient_evidence' | 'error' | 'rejected'
-
-export interface AgentRunState {
-  role_key: RoleKey
-  state: AgentUiState
-  startedAt: number | null
-  finishedAt: number | null
-  issues: Issue[]
-  consumed: string[]
-  /** undefined until the agent finishes; null = finished without a report */
-  report: string | null | undefined
-  /** optional short summary from agent_finished */
-  summary?: string | null
-  /** asset ids this agent flagged (from agent_finished.flagged_asset_ids); undefined = not provided */
-  flagged?: string[]
+/** An agent as shown in the UI. Names are the readable form of the role key; the service sends no other metadata. */
+export interface AgentInfo {
+  role_key: string
+  name: string
+  /** position in the order the service lists the agents in */
+  order: number
 }
 
-/** Latest sample per tag from sensor_reading events. */
+export interface AgentRunState {
+  role_key: string
+  state: AgentUiState
+  /** status exactly as received; null = the service sent none */
+  status: string | null | undefined
+  reportId: string | null
+  issueCodes: string[]
+  windowIndex: number | null
+}
+
 export interface SensorSample {
   tag_id: string
   value: number | boolean | null
   unit: string
-  quality: SignalQuality
-  /** seconds since the start of the recorded window */
+  quality: string
+  availability?: string
+  mean?: number | null
+  minimum?: number | null
+  maximum?: number | null
+  /** as_of_s of the window the sample belongs to */
   t: number
-  /** run time of the event (ms) */
-  ts: number
 }
 
-export type RunStatus = 'idle' | 'running' | 'finished' | 'stopped' | 'failed'
+export type RunStatus = 'idle' | 'starting' | 'running' | 'finished' | 'stopped' | 'failed'
+export type Connection = 'none' | ConnectionState
 
-export interface LoggedMessage extends RunMessageEvent {
-  /** sequence number in arrival order */
-  seq: number
+export interface LoggedEvent {
+  event: ServiceEvent
 }
+
+export type ReportState =
+  | { state: 'idle' }
+  | { state: 'waiting' }
+  | { state: 'loading' }
+  /** 409 */
+  | { state: 'pending' }
+  | { state: 'ok'; window: number; windowsAvailable: number[]; report: MaintenanceReport }
+  | { state: 'error'; message: string }
+
+export type TruthState =
+  | { state: 'off' }
+  | { state: 'waiting' }
+  | { state: 'loading' }
+  | { state: 'ok'; truth: TruthResponse }
+  | { state: 'unavailable'; message: string }
+  | { state: 'error'; message: string }
 
 export interface RunState {
   status: RunStatus
-  runId: string | null
-  scenarioId: string | null
-  agents: Record<string, AgentRunState>
-  messages: LoggedMessage[]
-  /** ts of the latest event seen (ms since run start) */
-  lastTs: number
-  finalDecisionState: string | null | undefined
-  verified: boolean | null | undefined
-  expectedVsObserved: ExpectedVsObserved[]
-  bundle: RunBundle | null
-  error: string | null
-  /** Asset ids flagged so far by agent_finished events (undefined until any agent reports flags). */
-  flaggedAssetIds?: string[]
-  /** asset id -> agents that flagged it, from agent_finished events */
-  flaggedBy: Record<string, RoleKey[]>
-  /** latest reading per tag id */
+  connection: Connection
+  run: RunInfo | null
+  /** mode and time compression as given by the latest event (or by the run when no event has arrived) */
+  mode: RunMode | null
+  timeCompression: TimeCompression | null
+  dataNote: string | null
+  lastSeq: number
+  events: ServiceEvent[]
   sensors: Record<string, SensorSample>
-  /** number of sensor_reading events received in this run */
-  readingCount: number
-  /** undefined = not loaded yet, null = the backend does not provide a report */
-  report: MaintenanceReport | null | undefined
+  windowIndex: number | null
+  asOfS: number | null
+  agentOrder: string[]
+  agents: Record<string, AgentRunState>
+  decision: Decision | null | undefined
+  persistence: Persistence | null | undefined
+  runnerNotes: string[]
+  alerts: AlertEvent[]
+  windowsSeen: number
+  done: DoneEvent | null
+  error: string | null
+  /** events that could not be parsed */
+  malformed: number
+  report: ReportState
+  truth: TruthState
 }
 
 export type RunAction =
-  | { type: 'reset'; agents: AgentInfo[] }
-  | { type: 'begin'; scenarioId: string }
-  | { type: 'event'; event: RunEvent }
-  | { type: 'bundle'; bundle: RunBundle }
-  | { type: 'report'; report: MaintenanceReport | null }
-  | { type: 'stopped' }
+  | { type: 'starting' }
+  | { type: 'created'; run: RunInfo }
+  | { type: 'event'; event: ServiceEvent }
+  | { type: 'connection'; state: ConnectionState }
+  | { type: 'malformed' }
   | { type: 'failed'; error: string }
+  | { type: 'stopped' }
+  | { type: 'report'; report: ReportState }
+  | { type: 'truth'; truth: TruthState }
 
-export function agentUiState(status: AgentStatus): AgentUiState {
-  return status === 'rejected_by_runner' ? 'rejected' : status
-}
-
-export function initialRunState(agents: AgentInfo[] = []): RunState {
-  const map: Record<string, AgentRunState> = {}
-  for (const a of agents) {
-    map[a.role_key] = { role_key: a.role_key, state: 'idle', startedAt: null, finishedAt: null, issues: [], consumed: [], report: undefined }
-  }
+export function initialRunState(): RunState {
   return {
-    status: 'idle', runId: null, scenarioId: null, agents: map, messages: [], lastTs: 0,
-    finalDecisionState: undefined, verified: undefined, expectedVsObserved: [], bundle: null, error: null,
-    flaggedAssetIds: undefined, flaggedBy: {}, sensors: {}, readingCount: 0, report: undefined,
+    status: 'idle', connection: 'none', run: null, mode: null, timeCompression: null, dataNote: null, lastSeq: -1,
+    events: [], sensors: {}, windowIndex: null, asOfS: null, agentOrder: [], agents: {},
+    decision: undefined, persistence: undefined, runnerNotes: [], alerts: [], windowsSeen: 0,
+    done: null, error: null, malformed: 0, report: { state: 'idle' }, truth: { state: 'off' },
   }
 }
 
-/** Pure reducer: turns the event stream into UI state. */
-export function runReducer(state: RunState, action: RunAction): RunState {
-  switch (action.type) {
-    case 'reset':
-      return initialRunState(action.agents)
-    case 'begin':
-      return { ...initialRunState(Object.values(state.agents).map((a) => ({ role_key: a.role_key, name: '', description: '', order: 0 }))), status: 'running', scenarioId: action.scenarioId }
-    case 'bundle':
-      return { ...state, bundle: action.bundle }
-    case 'report':
-      return { ...state, report: action.report }
-    case 'stopped':
-      if (state.status !== 'running') return state
-      return { ...state, status: 'stopped' }
+/** Agents in the order the service listed them (empty until the first window result). */
+export function agentList(s: RunState): AgentInfo[] {
+  return s.agentOrder.map((k, i) => ({ role_key: k, name: label(k), order: i + 1 }))
+}
+
+/** Pure reducer: turns the stream into UI state. Events already seen (by seq) are ignored. */
+export function runReducer(state: RunState, a: RunAction): RunState {
+  switch (a.type) {
+    case 'starting':
+      return { ...initialRunState(), status: 'starting' }
+    case 'created':
+      return {
+        ...state, status: 'running', run: a.run, mode: a.run.mode,
+        truth: a.run.reveal_truth ? { state: 'waiting' } : { state: 'off' },
+        report: { state: 'waiting' },
+      }
+    case 'connection':
+      return { ...state, connection: a.state }
+    case 'malformed':
+      return { ...state, malformed: state.malformed + 1 }
     case 'failed':
-      return { ...state, status: 'failed', error: action.error }
+      return { ...state, status: 'failed', error: a.error }
+    case 'stopped':
+      return state.status === 'running' || state.status === 'starting' ? { ...state, status: 'stopped', connection: 'closed' } : state
+    case 'report':
+      return { ...state, report: a.report }
+    case 'truth':
+      return { ...state, truth: a.truth }
     case 'event': {
-      const e = action.event
-      const lastTs = Math.max(state.lastTs, e.ts)
+      const e = a.event
+      if (typeof e.seq === 'number' && e.seq <= state.lastSeq) return state
+      const base: RunState = {
+        ...state,
+        lastSeq: typeof e.seq === 'number' ? e.seq : state.lastSeq,
+        events: [...state.events, e],
+        mode: e.mode ?? state.mode,
+        timeCompression: e.time_compression ?? state.timeCompression,
+        dataNote: typeof e.data === 'string' ? e.data : state.dataNote,
+      }
       switch (e.type) {
-        case 'sensor_reading':
-          return {
-            ...state, lastTs, readingCount: state.readingCount + 1,
-            sensors: { ...state.sensors, [e.tag_id]: { tag_id: e.tag_id, value: e.value ?? null, unit: e.unit, quality: e.quality ?? 'unknown', t: e.t, ts: e.ts } },
+        case 'sensor_reading': {
+          const sensors = { ...state.sensors }
+          for (const r of e.readings ?? []) {
+            sensors[r.tag_id] = {
+              tag_id: r.tag_id, value: r.value ?? null, unit: r.unit, quality: r.quality, availability: r.availability,
+              mean: r.mean, minimum: r.minimum, maximum: r.maximum, t: e.as_of_s,
+            }
           }
-        case 'run_started':
-          return { ...state, status: 'running', runId: e.run_id, scenarioId: e.scenario_id, lastTs }
-        case 'agent_started': {
-          const prev = state.agents[e.role_key]
-          if (!prev) return { ...state, lastTs }
-          return { ...state, lastTs, agents: { ...state.agents, [e.role_key]: { ...prev, state: 'running', startedAt: e.ts } } }
+          return { ...base, sensors, windowIndex: e.window_index, asOfS: e.as_of_s }
         }
-        case 'message':
-          return { ...state, lastTs, messages: [...state.messages, { ...e, seq: state.messages.length }] }
-        case 'agent_finished': {
-          const prev = state.agents[e.role_key]
-          if (!prev) return { ...state, lastTs }
-          let flaggedBy = state.flaggedBy
-          let flaggedAssetIds = state.flaggedAssetIds
-          if (Array.isArray(e.flagged_asset_ids)) {
-            flaggedBy = { ...flaggedBy }
-            flaggedAssetIds = [...(flaggedAssetIds ?? [])]
-            for (const id of e.flagged_asset_ids) {
-              const by = flaggedBy[id] ?? []
-              if (!by.includes(e.role_key)) flaggedBy[id] = [...by, e.role_key]
-              if (!flaggedAssetIds.includes(id)) flaggedAssetIds.push(id)
+        case 'window_result': {
+          const order = state.agentOrder.length ? [...state.agentOrder] : Object.keys(e.agents ?? {})
+          for (const k of Object.keys(e.agents ?? {})) if (!order.includes(k)) order.push(k)
+          const agents: Record<string, AgentRunState> = {}
+          for (const k of order) {
+            const w = e.agents?.[k]
+            agents[k] = {
+              role_key: k, state: agentUiState(w ? w.status : undefined), status: w ? w.status : undefined,
+              reportId: w?.report_id ?? null, issueCodes: w?.runner_issue_codes ?? [], windowIndex: w ? e.window_index : null,
             }
           }
           return {
-            ...state, lastTs, flaggedBy, flaggedAssetIds,
-            agents: {
-              ...state.agents,
-              [e.role_key]: {
-                ...prev, state: agentUiState(e.status), finishedAt: e.ts, issues: e.issues,
-                consumed: e.consumed_evidence_ids, report: e.report_summary,
-                summary: e.summary, flagged: e.flagged_asset_ids,
-              },
-            },
+            ...base, agentOrder: order, agents, windowIndex: e.window_index, asOfS: e.as_of_s,
+            decision: e.decision, persistence: e.persistence, runnerNotes: e.runner_note_codes ?? [], windowsSeen: state.windowsSeen + 1,
           }
         }
-        case 'run_finished':
+        case 'alert':
+          return { ...base, alerts: [...state.alerts, e] }
+        case 'done': {
+          const status: RunStatus = e.status === 'completed' ? 'finished' : e.status === 'stopped' ? 'stopped' : 'failed'
           return {
-            ...state, lastTs, status: 'finished', finalDecisionState: e.final_decision_state,
-            verified: e.verified, expectedVsObserved: e.expected_vs_observed,
+            ...base, done: e, status,
+            error: status === 'failed' ? `The run failed${e.error_type ? ` (${e.error_type})` : ''}.` : state.error,
           }
+        }
       }
     }
   }
 }
 
-/** Elapsed ms for an agent, or null if it has not started. Uses event timestamps only. */
-export function elapsedMs(a: AgentRunState, lastTs: number): number | null {
-  if (a.startedAt === null) return null
-  return (a.finishedAt ?? lastTs) - a.startedAt
-}
-
-const SEVERITY_RANK: Record<string, number> = { error: 0, warning: 1, info: 2 }
-/** The most severe issue (first one wins on ties). */
-export function topIssue(issues: Issue[]): Issue | null {
-  if (issues.length === 0) return null
-  return [...issues].sort((a, b) => (SEVERITY_RANK[a.severity ?? 'info'] ?? 3) - (SEVERITY_RANK[b.severity ?? 'info'] ?? 3))[0] ?? null
-}
-
 export type ReadingTone = 'ok' | 'warn' | 'unknown'
 /**
- * How a reading is shown. Missing, stale or suspect values are never shown as a normal value:
- * missing -> "unknown"; any other non-good quality -> its quality label.
+ * How a reading is shown. A missing value is "not available"; a value whose quality is not "good",
+ * or that was not measured, is shown by that label and never as a normal value.
  */
 export function readingDisplay(r: SensorSample | undefined): { text: string; tone: ReadingTone; normal: boolean } {
-  if (!r || r.value === null || r.value === undefined || r.quality === 'missing') return { text: 'unknown', tone: 'unknown', normal: false }
-  if (r.quality !== 'good') return { text: String(r.quality), tone: 'warn', normal: false }
-  const v = typeof r.value === 'boolean' ? (r.value ? 'true' : 'false') : String(r.value)
+  if (!r || r.value === null || r.value === undefined || r.quality === 'missing') return { text: 'not available', tone: 'unknown', normal: false }
+  if (r.quality !== 'good') return { text: label(r.quality), tone: 'warn', normal: false }
+  if (r.availability && r.availability !== 'measured') return { text: label(r.availability), tone: 'warn', normal: false }
+  const v = typeof r.value === 'boolean' ? (r.value ? 'true' : 'false') : String(Number(r.value.toPrecision(5)))
   return { text: r.unit && r.unit !== 'bool' ? `${v} ${r.unit}` : v, tone: 'ok', normal: true }
-}
-
-/** Flagged assets: from the bundle when available, otherwise from agent_finished events. */
-export function flaggedAssets(s: RunState): { asset: string; by: RoleKey[]; note?: string; severity?: string }[] {
-  if (s.bundle) return s.bundle.flagged_assets.map((f) => ({ asset: f.asset, by: f.flagged_by, note: f.note, severity: f.severity }))
-  return (s.flaggedAssetIds ?? []).map((id) => ({ asset: id, by: s.flaggedBy[id] ?? [] }))
 }

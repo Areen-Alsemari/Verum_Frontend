@@ -1,37 +1,32 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
-import { resolveApi, type AgentInfo, type ApiClient, type Scenario } from './api'
+import { useCallback, useEffect, useState } from 'react'
+import { getEpisodes, getFacility, health, type Episode, type Health, type RunMode } from './api'
 import { Header } from './components/Header'
-import { ScenarioPicker } from './components/ScenarioPicker'
 import { AgentBoard } from './components/AgentBoard'
 import { AgentDrawer } from './components/AgentDrawer'
 import { InvestigationTab } from './tabs/InvestigationTab'
 import { InspectionTab } from './tabs/InspectionTab'
 import { ReportTab } from './report/ReportTab'
-import { ScenarioChecks } from './components/ScenarioChecks'
 import { MessageLog } from './components/MessageLog'
-import { ControlPanel } from './components/ControlPanel'
-import { defaultControls, useRunController } from './state/useRunController'
-import type { ControlValue, ControlValues } from './api'
+import { ModeBar } from './components/ModeBar'
+import { RunBar, SPEEDS } from './components/RunBar'
+import { ServiceMessage, type ServiceStatus } from './components/ServiceMessage'
+import { useRunController } from './state/useRunController'
 import { TabBar } from './shell/TabBar'
 import { TABS, useHashRoute, type TabId } from './shell/routes'
 import { CommandCenter } from './command/CommandCenter'
 import { FacilityView } from './facility/FacilityView'
-import { flaggedAssets } from './state/runState'
-import { hasWebGL, usePref } from './lib/env'
-import { FocusView } from './command/FocusView'
-import { SnapshotTaker } from './three/SnapshotTaker'
-import { RunBar } from './components/RunBar'
-import { ControlsDialog } from './components/ControlsDialog'
-import { STATIC_FACILITY, facilityFromDto, snapshotMismatch, unknownIds, type Facility } from './facility'
+import { agentList } from './state/runState'
+import { usePref } from './lib/env'
+import { describeError } from './lib/service'
+import { STATIC_FACILITY, serviceMismatch, unknownIds } from './facility'
 
-function TabPanel({ id, active, actions, sub, children }: { id: TabId; active: TabId; actions?: React.ReactNode; sub?: string; children: React.ReactNode }) {
+function TabPanel({ id, active, sub, children }: { id: TabId; active: TabId; sub?: string; children: React.ReactNode }) {
   if (id !== active) return null
   const label = TABS.find((t) => t.id === id)!.label
   return (
     <section id={`panel-${id}`} role="tabpanel" aria-labelledby={`tab-${id}`} className="page" tabIndex={-1}>
       <div className="page-head">
         <div><h2 className="page-title">{label}</h2>{sub && <p className="page-sub">{sub}</p>}</div>
-        {actions}
       </div>
       {children}
     </section>
@@ -39,181 +34,132 @@ function TabPanel({ id, active, actions, sub, children }: { id: TabId; active: T
 }
 
 export default function App() {
-  const [client, setClient] = useState<ApiClient | null>(null)
-  const [demoReason, setDemoReason] = useState<string | null>(null)
-  const [agents, setAgents] = useState<AgentInfo[]>([])
-  const [scenarios, setScenarios] = useState<Scenario[]>([])
-  const [selectedId, setSelectedId] = useState<string | null>(null)
-  const [loadError, setLoadError] = useState<string | null>(null)
   const [tab, setTab] = useHashRoute()
-  // the old "#/scenarios" link opens the controls card over the command center
-  const [controlsOpen, setControlsOpen] = useState(() => /^#\/?scenarios/.test(window.location.hash))
-  const [facility, setFacility] = useState<Facility>(STATIC_FACILITY)
+  const [service, setService] = useState<ServiceStatus>({ state: 'checking' })
+  const [modes, setModes] = useState<Health['modes'] | null>(null)
+  const [mode, setMode] = useState<RunMode>('replay')
+  const [episodes, setEpisodes] = useState<Episode[] | null>(null)
+  const [episodesError, setEpisodesError] = useState<string | null>(null)
+  const [episodeId, setEpisodeId] = useState('')
+  const [speed, setSpeed] = useState(SPEEDS[0]!)
+  const [revealTruth, setRevealTruth] = useState(false)
+  const [serviceIds, setServiceIds] = useState<string[] | null>(null)
   const [selectedAsset, setSelectedAsset] = useState<string | null>(null)
-  const [focusFlag, setFocusFlag] = useState<string | null>(null)
-  const [snapshots, setSnapshots] = useState<Record<string, string | null>>({})
+  const [drawerRole, setDrawerRole] = useState<string | null>(null)
   const [twoD, setTwoD] = usePref('view2d', false)
   const [lowDetail, setLowDetail] = usePref('lowDetail', false)
-
-  useEffect(() => {
-    let cancelled = false
-    ;(async () => {
-      try {
-        const api = await resolveApi()
-        const [a, s] = await Promise.all([api.client.listAgents(), api.client.listScenarios()])
-        if (cancelled) return
-        setClient(api.client)
-        setDemoReason(api.client.mode === 'mock' ? api.mockReason : null)
-        setAgents([...a].sort((x, y) => x.order - y.order))
-        setScenarios(s)
-        setSelectedId(s[0]?.id ?? null)
-        const dto = await api.client.getFacility().catch(() => null)
-        if (!cancelled && dto && api.client.mode === 'real') setFacility(facilityFromDto(dto))
-      } catch (e) {
-        if (!cancelled) setLoadError(e instanceof Error ? e.message : String(e))
-      }
-    })()
-    return () => { cancelled = true }
-  }, [])
-
-  const [controlValues, setControlValues] = useState<Record<string, ControlValues>>({})
-  const [drawerRole, setDrawerRole] = useState<string | null>(null)
-  const agentsByKey = Object.fromEntries(agents.map((a) => [a.role_key, a]))
-  const ctl = useRunController(client, agents, scenarios)
+  const ctl = useRunController()
   const run = ctl.state
-  // when an agent flags an asset, ease the main camera to it (first newly flagged id wins)
-  const seenFlags = useRef<{ runId: string | null; ids: string[] }>({ runId: null, ids: [] })
-  const flagIds = (run.bundle?.flagged_assets.map((f) => f.asset) ?? run.flaggedAssetIds ?? []).join('|')
-  useEffect(() => {
-    const ids = flagIds ? flagIds.split('|') : []
-    const seen = seenFlags.current
-    if (seen.runId !== run.runId) {
-      seenFlags.current = { runId: run.runId, ids: [] }
-      setFocusFlag(null)
-      setSelectedAsset(null)
-    }
-    const fresh = ids.filter((i) => !seenFlags.current.ids.includes(i))
-    if (fresh.length) {
-      seenFlags.current.ids = [...seenFlags.current.ids, ...fresh]
-      setFocusFlag((cur) => cur ?? fresh[0]!)
-      setSelectedAsset(null)
-    }
-  }, [flagIds, run.runId])
-  const onSnapshot = useCallback((asset: string, url: string | null) => {
-    setSnapshots((s) => ({ ...s, [`${ctl.state.runId}:${asset}`]: url }))
-  }, [ctl.state.runId])
-  const running = run.status === 'running'
-  const scenario = scenarios.find((s) => s.id === selectedId) ?? null
-  /** the scenario of the current run (may differ from the selected one) */
-  const runScenario = scenarios.find((s) => s.id === run.scenarioId)
-  const values: ControlValues = scenario ? { ...defaultControls(scenario), ...controlValues[scenario.id] } : {}
-  const setValue = (id: string, v: ControlValue) =>
-    scenario && setControlValues((c) => ({ ...c, [scenario.id]: { ...values, [id]: v } }))
 
-  const runMessages = (
-    <>
-      {loadError && <p className="state-msg state-error" role="alert">Could not load data: {loadError}. <button type="button" className="btn btn-ghost" onClick={() => window.location.reload()}>Retry</button></p>}
-      {!client && !loadError && <p className="state-msg" role="status">Loading scenarios…</p>}
-      {run.status === 'failed' && <p className="state-msg state-error" role="alert">{run.error ?? 'The run failed.'} Nothing was concluded from this run.</p>}
-      {run.status === 'stopped' && <p className="state-msg" role="status">Run stopped before it finished. Partial results are shown as they were.</p>}
-    </>
-  )
-  const runBar = (
-    <RunBar scenarios={scenarios} selectedId={selectedId} status={run.status} onSelect={setSelectedId}
-      onRun={() => scenario && void ctl.run(scenario, values)} onStop={ctl.stop} onMore={() => setControlsOpen(true)}
-      stepMode={ctl.stepMode} queued={ctl.queued} onNext={ctl.next} />
-  )
-  // ids from the run (or the API facility) that the snapshot does not contain
-  const runIds = [
-    ...(run.bundle?.flagged_assets.map((f) => f.asset) ?? []), ...(run.flaggedAssetIds ?? []),
-    ...Object.keys(run.sensors), ...(run.bundle?.inspection_options.flatMap((o) => o.targets) ?? []),
-  ]
-  const mismatch = [...new Set([...unknownIds(facility, runIds), ...(facility.origin === 'api' ? snapshotMismatch(facility) : [])])]
+  const checkService = useCallback(() => {
+    setService({ state: 'checking' })
+    health().then(
+      (h) => {
+        setModes(h.modes)
+        setMode((m) => (h.modes[m] ? m : h.modes.replay ? 'replay' : h.modes.live ? 'live' : m))
+        setService({ state: 'up' })
+        getFacility().then((f) => setServiceIds(serviceMismatch(f)), () => setServiceIds(null))
+      },
+      (e) => setService({ state: 'down', message: describeError(e) }),
+    )
+  }, [])
+  useEffect(() => { checkService() }, [checkService])
+
+  const serviceUp = service.state === 'up'
+  useEffect(() => {
+    if (!serviceUp) return
+    let cancelled = false
+    setEpisodes(null)
+    setEpisodesError(null)
+    setEpisodeId('')
+    getEpisodes(mode).then(
+      (r) => {
+        if (cancelled) return
+        setEpisodes(r.episodes)
+        if (r.episodes.length === 0) {
+          setEpisodesError(mode === 'replay'
+            ? 'No replay episodes: the replay directory is empty or the service was started without --replay-dir.'
+            : 'No live episodes are available: the service may have been started without --release.')
+        }
+      },
+      (e) => { if (!cancelled) { setEpisodes([]); setEpisodesError(`The episode list could not be loaded. ${describeError(e)}`) } },
+    )
+    return () => { cancelled = true }
+  }, [serviceUp, mode])
+
+  const agents = agentList(run)
+  const agentsByKey = Object.fromEntries(agents.map((a) => [a.role_key, a]))
+  const running = run.status === 'running' || run.status === 'starting'
+
+  const runIds = Object.keys(run.sensors)
+  const mismatch = [...new Set([...unknownIds(STATIC_FACILITY, runIds), ...(serviceIds ?? [])])]
   const mismatchBadge = mismatch.length > 0 && (
-    <span className="badge-warn" tabIndex={0} title={`Ids not in the facility snapshot: ${mismatch.join(', ')}`} aria-label={`Facility mismatch: ${mismatch.length} ids not in the facility snapshot: ${mismatch.join(', ')}`}>
+    <span className="badge-warn" tabIndex={0} title={`Ids that differ between the service and the layout snapshot: ${mismatch.join(', ')}`}
+      aria-label={`Facility mismatch: ${mismatch.length} ids differ between the service and the layout snapshot: ${mismatch.join(', ')}`}>
       Facility mismatch · {mismatch.length}
     </span>
   )
-  const flaggedList = flaggedAssets(run).map((f) => ({ ...f, by: f.by as string[] }))
-  const flaggedMap = new Map(flaggedList.map((f) => [f.asset, { by: f.by, severity: f.severity }]))
-  const agentName = (r: string) => agentsByKey[r]?.name ?? r
-  const cameraFocus = selectedAsset ?? focusFlag
+
+  const retryReport = () => { if (run.run) void ctl.loadReport(run.run.run_id, run.report.state === 'ok' ? run.report.window : undefined) }
+
+  const messages = (
+    <>
+      {run.status === 'failed' && <p className="state-msg state-error" role="alert">{run.error ?? 'The run failed.'} Nothing was concluded from this run.</p>}
+      {run.status === 'stopped' && run.done === null && <p className="state-msg" role="status">Stopped watching before the run finished. Partial results are shown as they were.</p>}
+      {run.connection === 'reconnecting' && running && <p className="state-msg" role="status">The event stream dropped. Reconnecting and resuming after event {run.lastSeq}…</p>}
+      {run.status === 'finished' && run.done?.windows === 0 && <p className="state-msg" role="status">The run finished with no windows. The episode has nothing to play.</p>}
+      {run.status === 'finished' && <p className="state-msg" role="status">Run finished after {run.done?.windows ?? 'an unspecified number of'} windows.</p>}
+    </>
+  )
+
   const facilityView = (
-    <FacilityView facility={facility} flagged={flaggedMap} readings={run.sensors} selectedId={selectedAsset} onSelect={setSelectedAsset}
-      focusId={cameraFocus} twoD={twoD} onTwoD={setTwoD} lowDetail={lowDetail} onLowDetail={setLowDetail} agentName={agentName} />
+    <>
+      <FacilityView facility={STATIC_FACILITY} flagged={new Map()} readings={run.sensors} selectedId={selectedAsset} onSelect={setSelectedAsset}
+        focusId={selectedAsset} twoD={twoD} onTwoD={setTwoD} lowDetail={lowDetail} onLowDetail={setLowDetail} agentName={(r) => agentsByKey[r]?.name ?? r} />
+      <p className="control-help facility-source">Layout (positions and connections) is a static snapshot; the service sends no coordinates. Readings come from the event stream. The service lists no flagged assets.</p>
+    </>
   )
-  const focusView = (title?: string) => flaggedList.length > 0 && (
-    <FocusView facility={facility} flagged={flaggedList} readings={run.sensors} focusId={focusFlag} title={title}
-      onFocus={(id) => { setFocusFlag(id); setSelectedAsset(null) }} agentName={agentName} twoD={twoD} lowDetail={lowDetail} />
-  )
-  // report snapshots: one per flagged asset, rendered off-screen once the report has arrived
-  const pendingSnapshot = run.report !== undefined && run.runId && hasWebGL()
-    ? flaggedList.find((f) => !(`${run.runId}:${f.asset}` in snapshots))?.asset ?? null : null
-  const failedAgents = Object.values(run.agents).filter((a) => a.state === 'error' || a.state === 'rejected').length
+
+  const failedAgents = Object.values(run.agents).filter((a) => a.state === 'error' || a.state === 'rejected' || a.state === 'nostatus').length
   const badges: Partial<Record<TabId, { text: string; tone?: 'fail' | 'warn' | 'info' }>> = {}
   if (failedAgents) badges.agents = { text: String(failedAgents), tone: 'fail' }
-  if (run.messages.length) badges.log = { text: String(run.messages.length) }
-  const board = <AgentBoard agents={agents} run={run} selected={drawerRole} onSelect={(r) => setDrawerRole((cur) => (cur === r ? null : r))} />
+  if (run.events.length) badges.log = { text: String(run.events.length) }
 
   return (
     <div className="app">
       <a className="skip-link" href="#main">Skip to content</a>
       <div className="backdrop" aria-hidden="true" />
-      <Header demoReason={demoReason} status={run.status} extra={mismatchBadge}>
+      <Header status={run.status} extra={mismatchBadge}>
         <TabBar active={tab} onSelect={setTab} badges={badges} />
       </Header>
+      <ModeBar run={run} />
       <main id="main" tabIndex={-1}>
-        <TabPanel id="command" active={tab} sub="Simulated gasoline terminal. Simulated stream (replay of recorded windows), not live plant data.">
-          {runBar}
-          {runMessages}
-          <CommandCenter agents={agents} run={run} scenario={runScenario} simulated={client?.mode === 'mock'}
-            selectedAgent={drawerRole} onSelectAgent={(r) => setDrawerRole((cur) => (cur === r ? null : r))} onGo={setTab} readings={run.status === 'idle' ? null : run.readingCount}
-            stage={facilityView} focus={focusView()} />
+        <TabPanel id="command" active={tab} sub="Simulated gasoline terminal. Synthetic data from the simulator, not plant data.">
+          <ServiceMessage status={service} onRetry={checkService} />
+          <RunBar mode={mode} onMode={setMode} modes={modes} episodes={episodes} episodesError={episodesError} episodeId={episodeId} onEpisode={setEpisodeId}
+            speed={speed} onSpeed={setSpeed} revealTruth={revealTruth} onRevealTruth={setRevealTruth} status={run.status} serviceUp={serviceUp}
+            onRun={() => void ctl.start({ mode, speed, ...(episodeId ? { episode_id: episodeId } : {}), reveal_truth: revealTruth })} onStop={ctl.stop} />
+          {messages}
+          <CommandCenter run={run} selectedAgent={drawerRole} onSelectAgent={(r) => setDrawerRole((cur) => (cur === r ? null : r))} onGo={setTab} stage={facilityView} />
         </TabPanel>
-        <TabPanel id="agents" active={tab} sub="Live status of the eight agents. Select a card for its timing, issues and consumed reports.">
-          {runMessages}{board}
+        <TabPanel id="agents" active={tab} sub="Status of the eight agents in the latest window, exactly as the service sent it.">
+          {messages}<AgentBoard agents={agents} run={run} selected={drawerRole} onSelect={(r) => setDrawerRole((cur) => (cur === r ? null : r))} />
         </TabPanel>
-        <TabPanel id="log" active={tab} sub="Runner and agent requests, responses, attachments and issues.">
-          <MessageLog messages={run.messages} agents={agents} />
+        <TabPanel id="log" active={tab} sub="Every event received from the stream, in arrival order.">
+          <MessageLog events={run.events} malformed={run.malformed} />
         </TabPanel>
-        <TabPanel id="investigation" active={tab} sub="Unconfirmed hypotheses, evidence and report ids, and a close-up of the flagged assets.">
-          {runMessages}<InvestigationTab run={run} agents={agents} focus={focusView('Flagged assets, close-up')} />
+        <TabPanel id="investigation" active={tab} sub="Agent outcomes, the persistence rule, report findings (unconfirmed) and, if asked for, the simulation truth.">
+          {messages}<InvestigationTab run={run} onRetryReport={retryReport} />
         </TabPanel>
         <TabPanel id="inspection" active={tab} sub="Advisory options for an inspector to consider. A human decides.">
-          {runMessages}<InspectionTab run={run} />
+          {messages}<InspectionTab run={run} onRetryReport={retryReport} />
         </TabPanel>
-        <TabPanel id="report" active={tab} sub="Maintenance report built from the run data. Save it as PDF for the maintenance team.">
-          {runMessages}
-          <ReportTab run={run} agents={agents} scenario={runScenario} facility={facility} source={client?.mode === 'real' ? 'api' : 'mock'}
-            snapshots={Object.fromEntries(flaggedList.map((f) => [f.asset, snapshots[`${run.runId}:${f.asset}`] ?? null]))}
-            pending={run.report === undefined || !!pendingSnapshot} />
+        <TabPanel id="report" active={tab} sub="Maintenance report from the service (Agent 7). Save it as PDF for the maintenance team.">
+          {messages}<ReportTab run={run} onPickWindow={(w) => run.run && void ctl.loadReport(run.run.run_id, w)} onRetry={retryReport} />
         </TabPanel>
       </main>
       {drawerRole && agentsByKey[drawerRole] && (
-        <AgentDrawer info={agentsByKey[drawerRole]!} st={run.agents[drawerRole]} lastTs={run.lastTs} agentsByKey={agentsByKey} onClose={() => setDrawerRole(null)} />
-      )}
-      <ControlsDialog open={controlsOpen} onClose={() => setControlsOpen(false)}>
-        {runMessages}
-        <div className="grid-side">
-          <div className="stack">
-            <ScenarioPicker scenarios={scenarios} selectedId={selectedId} disabled={running} onSelect={setSelectedId} />
-          </div>
-          <div className="stack">
-            <ControlPanel
-              scenario={scenario} values={values} running={running} stepMode={ctl.stepMode} queued={ctl.queued}
-              runAll={ctl.runAll} isMock={client?.mode === 'mock'}
-              onChange={setValue}
-              onReset={() => scenario && setControlValues((c) => ({ ...c, [scenario.id]: defaultControls(scenario) }))}
-              onRun={() => { if (scenario) { setControlsOpen(false); void ctl.run(scenario, values) } }}
-              onRunStep={() => { if (scenario) { setControlsOpen(false); void ctl.runStepwise(scenario, values) } }}
-              onNext={ctl.next} onRunAll={() => { setControlsOpen(false); void ctl.runEvery() }} onStop={ctl.stop}
-            />
-            <ScenarioChecks scenarios={scenarios} results={ctl.results} activeId={ctl.activeScenarioId} />
-          </div>
-        </div>
-      </ControlsDialog>
-      {pendingSnapshot && (
-        <SnapshotTaker key={`${run.runId}:${pendingSnapshot}`} facility={facility} assetId={pendingSnapshot} flagged={flaggedMap} readings={run.sensors} onDone={onSnapshot} />
+        <AgentDrawer info={agentsByKey[drawerRole]!} st={run.agents[drawerRole]} onClose={() => setDrawerRole(null)} />
       )}
     </div>
   )
