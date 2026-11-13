@@ -113,11 +113,8 @@ export default function App() {
   )
 
   const facilityView = (
-    <>
-      <FacilityView facility={STATIC_FACILITY} flagged={new Map()} readings={run.sensors} selectedId={selectedAsset} onSelect={setSelectedAsset}
-        focusId={selectedAsset} twoD={twoD} onTwoD={setTwoD} lowDetail={lowDetail} onLowDetail={setLowDetail} agentName={(r) => agentsByKey[r]?.name ?? r} />
-      <p className="control-help facility-source">Layout (positions and connections) is a static snapshot; the service sends no coordinates. Readings come from the event stream. The service lists no flagged assets.</p>
-    </>
+    <FacilityView facility={STATIC_FACILITY} flagged={new Map()} readings={run.sensors} selectedId={selectedAsset} onSelect={setSelectedAsset}
+      focusId={selectedAsset} twoD={twoD} onTwoD={setTwoD} lowDetail={lowDetail} onLowDetail={setLowDetail} agentName={(r) => agentsByKey[r]?.name ?? r} />
   )
 
   const failedAgents = Object.values(run.agents).filter((a) => a.state === 'error' || a.state === 'rejected' || a.state === 'nostatus').length
