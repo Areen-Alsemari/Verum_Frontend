@@ -3,13 +3,13 @@ import type {
   AlertEvent, Decision, DoneEvent, MaintenanceReport, Persistence, RunInfo, RunMode, ServiceEvent, TimeCompression, TruthResponse,
 } from '../api/serviceTypes'
 import { agentUiState, type AgentUiState } from '../lib/agentState'
-import { label } from '../lib/labels'
+import { ROLE_NUMBER, label } from '../lib/labels'
 
 /** An agent as shown in the UI. Names are the readable form of the role key; the service sends no other metadata. */
 export interface AgentInfo {
   role_key: string
   name: string
-  /** position in the order the service lists the agents in */
+  /** fixed number of the role (ROLE_NUMBER); a role the map does not know is numbered after the eight */
   order: number
 }
 
@@ -108,9 +108,14 @@ export function initialRunState(): RunState {
   }
 }
 
-/** Agents in the order the service listed them (empty until the first window result). */
+/**
+ * The eight agents by their fixed numbers, then any other role the service sent (numbered after them, in the
+ * order received). The number never depends on the order of the events.
+ */
 export function agentList(s: RunState): AgentInfo[] {
-  return s.agentOrder.map((k, i) => ({ role_key: k, name: label(k), order: i + 1 }))
+  const known = Object.keys(ROLE_NUMBER).sort((a, b) => ROLE_NUMBER[a]! - ROLE_NUMBER[b]!)
+  const extra = s.agentOrder.filter((k) => !(k in ROLE_NUMBER))
+  return [...known, ...extra].map((k, i) => ({ role_key: k, name: label(k), order: ROLE_NUMBER[k] ?? known.length + 1 + (i - known.length) }))
 }
 
 /** Pure reducer: turns the stream into UI state. Events already seen (by seq) are ignored. */

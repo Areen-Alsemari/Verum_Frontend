@@ -184,3 +184,18 @@ describe('HTTP calls', () => {
     await expect(createRun({ mode: 'replay' })).rejects.toBeInstanceOf(ServiceUnavailableError)
   })
 })
+
+describe('agent numbers', () => {
+  it('are fixed by role, whatever order the service sends', async () => {
+    const { agentList } = await import('../src/state/runState')
+    const keys = ['inspection_quality_documentation', 'predictive_health', 'evidence_verification_decision', 'topology_dependency',
+      'historical_asset_intelligence', 'inspection_planning', 'anomaly_detection', 'diagnostic_reasoning']
+    const agents = Object.fromEntries(keys.map((k) => [k, { status: 'complete', report_id: null, runner_issue_codes: [] }]))
+    const s = runReducer(initialRunState(), { type: 'event', event: ev('window_result', 0, { window_index: 1, as_of_s: 300, agents, decision: null, persistence: null, runner_note_codes: [] }) as unknown as ServiceEvent })
+    expect(agentList(s).map((a) => [a.order, a.role_key])).toEqual([
+      [1, 'predictive_health'], [2, 'anomaly_detection'], [3, 'topology_dependency'], [4, 'historical_asset_intelligence'],
+      [5, 'diagnostic_reasoning'], [6, 'inspection_planning'], [7, 'inspection_quality_documentation'], [8, 'evidence_verification_decision'],
+    ])
+    expect(agentList(initialRunState()).map((a) => a.order)).toEqual([1, 2, 3, 4, 5, 6, 7, 8])
+  })
+})

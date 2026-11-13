@@ -16,6 +16,18 @@ export const ROLE_NAMES: Record<string, string> = {
   runner: 'Runner',
 }
 
+/** Fixed agent numbers, independent of the order the service sends them in. */
+export const ROLE_NUMBER: Record<string, number> = {
+  predictive_health: 1,
+  anomaly_detection: 2,
+  topology_dependency: 3,
+  historical_asset_intelligence: 4,
+  diagnostic_reasoning: 5,
+  inspection_planning: 6,
+  inspection_quality_documentation: 7,
+  evidence_verification_decision: 8,
+}
+
 const CODES: Record<string, string> = {
   // decision and assessment states
   more_evidence_required: 'More evidence required',
