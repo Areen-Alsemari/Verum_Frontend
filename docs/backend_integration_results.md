@@ -86,3 +86,17 @@ End-to-end, run from this session against the real service in the built-in brows
 
 Not exercised against the real service: a stream drop with resume (covered only by the unit tests), the empty replay
 directory state (the sample directory is not empty), and the 3D view on a machine without WebGL.
+
+## Addendum: housekeeping
+
+- **Dependencies:** `playwright-core` was the only package added for browser work. It was added with the screenshot
+  and perf scripts, which were deleted when the mock data was removed, so no script in the repo used it. It is removed
+  from `package.json` and the lock file. (The lock file still names `@vitest/browser-playwright`; that is an optional
+  peer entry of vitest, not a dependency of this repo.) The end-to-end checks used it from a scratch folder, not from the repo.
+- **Demo checklist:** `docs/demo_checklist.md`. The replay-sample rebuild command is from the project brief; its
+  flags exist in `tools/agents/run_runner_sample.py`, but the backend docs do not print it.
+- **Secrets:** no `.env`, key or credential file is tracked or staged, and none exists in the working tree. `.env`
+  was not in `.gitignore`; `.env`, `.env.*` (except `.env.example`) are now ignored. `git status` is clean.
+- **Commits:** all 34 commits on `frontend-redesign` (since `main`) are authored by Areen Alsemari
+  (`areenalsemari@gmail.com`). None has a trailer (Co-Authored-By or Signed-off-by) or a mention of Claude, Anthropic
+  or AI in its message, and a search of the tracked files for those words found nothing.
