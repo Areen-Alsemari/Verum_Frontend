@@ -467,3 +467,4 @@
 .agent-facts > div { min-width: 0; }
 .agent-facts dd { min-width: 0; }
 .agent-facts code { display: block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.quiet-note { margin: 0 0 12px; padding: 8px 12px; border-left: 3px solid var(--blue); border-radius: 6px; background: rgba(120,160,220,0.08); color: var(--cream); font-size: 13px; }

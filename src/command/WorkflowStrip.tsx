@@ -2,6 +2,7 @@ import { STATE_COLOR, isFailure, statusText } from '../lib/agentState'
 import type { AgentInfo, RunState } from '../state/runState'
 import { AgentIcon } from '../components/AgentIcon'
 import { Unknown } from '../components/Unknown'
+import { QuietNote } from '../components/QuietNote'
 import { label } from '../lib/labels'
 
 interface Props {
@@ -21,6 +22,7 @@ export function WorkflowStrip({ agents, run, selected, onSelect, readings = null
         <h3 id="strip-h" className="label panel-title">Agent workflow</h3>
         <span className="control-help">{run.mode ? `${run.mode} run` : 'No run yet'}{run.windowIndex !== null ? `, window ${run.windowIndex}` : ''}</span>
       </div>
+      <QuietNote run={run} />
       <ol className="strip">
         <li className="strip-step strip-input">
           <div className="strip-card st-input">

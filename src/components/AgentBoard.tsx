@@ -4,6 +4,7 @@ import { STATE_COLOR, isFailure, statusText } from '../lib/agentState'
 import { label } from '../lib/labels'
 import type { AgentInfo, AgentRunState, RunState } from '../state/runState'
 import { AgentIcon } from './AgentIcon'
+import { QuietNote } from './QuietNote'
 import { Unknown } from './Unknown'
 
 interface Props {
@@ -63,6 +64,7 @@ export function AgentBoard({ agents, run, selected, onSelect }: Props) {
         <h2 id="board-h" className="label panel-title">Agent pipeline{run.windowIndex !== null && <span className="control-help"> · status from window {run.windowIndex}</span>}</h2>
         <span className="pill" title="The arrows are the documented design, not data from this run">architecture</span>
       </div>
+      <QuietNote run={run} />
       <div className="board-wrap" ref={wrapRef}>
         <svg className="board-edges" width={size.w} height={size.h} aria-hidden="true">
           <defs>

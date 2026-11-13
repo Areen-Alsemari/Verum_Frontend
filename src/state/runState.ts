@@ -72,6 +72,8 @@ export interface RunState {
   events: ServiceEvent[]
   sensors: Record<string, SensorSample>
   windowIndex: number | null
+  /** window of the latest window_result (persistence and decision belong to it) */
+  resultWindowIndex: number | null
   asOfS: number | null
   agentOrder: string[]
   agents: Record<string, AgentRunState>
@@ -102,7 +104,7 @@ export type RunAction =
 export function initialRunState(): RunState {
   return {
     status: 'idle', connection: 'none', run: null, mode: null, timeCompression: null, dataNote: null, lastSeq: -1,
-    events: [], sensors: {}, windowIndex: null, asOfS: null, agentOrder: [], agents: {},
+    events: [], sensors: {}, windowIndex: null, resultWindowIndex: null, asOfS: null, agentOrder: [], agents: {},
     decision: undefined, persistence: undefined, runnerNotes: [], alerts: [], windowsSeen: 0,
     done: null, error: null, malformed: 0, report: { state: 'idle' }, truth: { state: 'off' },
   }
@@ -175,7 +177,7 @@ export function runReducer(state: RunState, a: RunAction): RunState {
             }
           }
           return {
-            ...base, agentOrder: order, agents, windowIndex: e.window_index, asOfS: e.as_of_s,
+            ...base, agentOrder: order, agents, windowIndex: e.window_index, resultWindowIndex: e.window_index, asOfS: e.as_of_s,
             decision: e.decision, persistence: e.persistence, runnerNotes: e.runner_note_codes ?? [], windowsSeen: state.windowsSeen + 1,
           }
         }

@@ -83,3 +83,16 @@ export function briefing(run: RunState): string[] {
   if (run.windowsSeen > 0) lines.push(`Decision state: ${ds ? label(ds) : 'not available'}. A human decides what happens next.`)
   return lines
 }
+
+export const QUIET_WINDOW_NOTE = 'Quiet window: no alert was raised, so downstream agents have nothing to investigate.'
+
+/**
+ * True only when the service says so: the latest window result carries a settled persistence statement with
+ * `alarming === false` and no alert event was received for that window. `alarming: null` means the rule is not
+ * settled (for example too few windows yet), `undefined` means no window result: both give false, never a guess.
+ */
+export function isQuietWindow(run: RunState): boolean {
+  if (run.persistence?.alarming !== false) return false
+  if (run.resultWindowIndex === null) return false
+  return !run.alerts.some((a) => a.window_index === run.resultWindowIndex)
+}
