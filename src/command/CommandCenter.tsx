@@ -31,7 +31,10 @@ export function CommandCenter(p: Props) {
             </div>
           )}
         </section>
-        <p className="control-help facility-source">Layout (positions and connections) is a static snapshot; the service sends no coordinates. Readings come from the event stream. The service lists no flagged assets.</p>
+        <p className="control-help facility-source" role="status">
+          <strong>{run.windowIndex === null ? 'No asset is flagged.' : `No asset is flagged for window ${run.windowIndex}: the service reports no implicated assets.`}</strong>{' '}
+          Layout (positions and connections) is a static snapshot; the service sends no coordinates. Readings come from the event stream.
+        </p>
         <WorkflowStrip agents={agents} run={run} selected={p.selectedAgent} onSelect={p.onSelectAgent} readings={run.status === 'idle' ? null : run.events.filter((e) => e.type === 'sensor_reading').length} />
       </div>
       <aside className="cc-side stack">
