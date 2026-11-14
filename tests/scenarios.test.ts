@@ -9,8 +9,8 @@ describe('scenario manifest', () => {
     for (const s of SCENARIOS) expect(s.title && s.description).toBeTruthy()
   })
 
-  it('titles are Scenario 1 to 4 and no episode id (EP-...) appears in any title, description or unavailable reason', () => {
-    expect(SCENARIOS.map((s) => s.title)).toEqual(['Scenario 1', 'Scenario 2', 'Scenario 3', 'Scenario 4'])
+  it('titles name the scenarios and no episode id (EP-...) appears in any title, description or unavailable reason', () => {
+    expect(SCENARIOS.map((s) => s.title)).toEqual(['Clear pump fault', 'Detector and classifier disagree', 'Degraded agents, two faults', 'Fault-free reference'])
     for (const s of SCENARIOS) {
       expect(s.title).not.toMatch(/EP-/)
       expect(s.description).not.toMatch(/EP-/)
@@ -20,9 +20,9 @@ describe('scenario manifest', () => {
     expect(scenarioName('EP-OTHER')).toBe('EP-OTHER')
   })
 
-  it('does not reveal the simulation truth or hardcode window counts', () => {
+  it('does not hardcode window counts', () => {
     const text = SCENARIOS.map((s) => `${s.title} ${s.description}`).join(' ')
-    expect(text).not.toMatch(/fault|leak|pump|disagree|degraded|alert(s)? (is|are) expected|no alerts|reference|\b\d+ windows\b/i)
+    expect(text).not.toMatch(/\b\d+ windows?\b/i)
   })
 
   it('is available only when the service lists the episode, and says why otherwise', () => {

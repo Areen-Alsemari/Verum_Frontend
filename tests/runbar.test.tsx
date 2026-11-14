@@ -34,7 +34,7 @@ describe('run bar', () => {
     const onScenario = vi.fn()
     render(<RunBar {...base} modes={{ replay: true, live: false }} episodes={base.episodes.slice(1)} onScenario={onScenario} />)
     fireEvent.click(screen.getByRole('combobox', { name: /Scenario/ }))
-    const first = screen.getByRole('option', { name: /Scenario 1/ })
+    const first = screen.getByRole('option', { name: /Clear pump fault/ })
     expect(first).toHaveAttribute('aria-disabled', 'true')
     expect(first).toHaveTextContent(/episode is not in this service/)
     expect(first.textContent).not.toMatch(/EP-/)

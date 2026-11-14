@@ -1,11 +1,10 @@
 import type { Episode } from '../api'
 
 /**
- * The scenario manifest: titles and one-line descriptions keyed by episode_id. The episode_id is internal: it is
- * never shown for these four scenarios (titles are "Scenario 1" to "Scenario 4"). Each entry starts a real replay run
- * of that episode on the service. The texts say nothing about what happens in the episode (no fault names, no
- * expected result); the simulation truth is shown only through the reveal-truth control. Window counts are not
- * written here: they come from the run.
+ * The scenario manifest: titles and one-line descriptions keyed by episode_id. The titles say what each scenario is.
+ * The episode_id is internal and is never shown for these four scenarios. Each entry starts a real replay run of that
+ * episode on the service. Window counts are not written here: they come from the service. The simulation truth
+ * table is still shown only through the reveal-truth control.
  */
 export interface Scenario {
   episode_id: string
@@ -16,23 +15,23 @@ export interface Scenario {
 export const SCENARIOS: Scenario[] = [
   {
     episode_id: 'EP-4F6063766113',
-    title: 'Scenario 1',
-    description: 'Replays the windows stored for this scenario, in order. Follow the agent statuses and any alert window by window.',
+    title: 'Clear pump fault',
+    description: 'A pump fault. Follow the agent statuses and any alert window by window.',
   },
   {
     episode_id: 'EP-099E6BB5B00A',
-    title: 'Scenario 2',
-    description: 'Replays the windows stored for this scenario, in order. Compare what each agent reports for the window.',
+    title: 'Detector and classifier disagree',
+    description: 'One stored window where the detector and the classifier disagree. Compare what each agent reports.',
   },
   {
     episode_id: 'EP-877BF141CA51',
-    title: 'Scenario 3',
-    description: 'Replays the windows stored for this scenario, in order. Watch how statuses and the decision state change between windows.',
+    title: 'Degraded agents, two faults',
+    description: 'Degraded agents and two faults. Watch how statuses and the decision state change between windows.',
   },
   {
     episode_id: 'EP-81C608D7A4C8',
-    title: 'Scenario 4',
-    description: 'Replays the windows stored for this scenario, in order. Follow the persistence rule and any alert window by window.',
+    title: 'Fault-free reference',
+    description: 'A fault-free reference run. No alerts are expected; follow the persistence rule window by window.',
   },
 ]
 
@@ -53,7 +52,7 @@ export function availability(s: Scenario, episodes: Episode[] | null, serviceUp:
   return { available: true }
 }
 
-/** What the UI calls an episode: "Scenario N" for the four manifest entries, the episode id for any other episode. */
+/** What the UI calls an episode: the scenario title for the four manifest entries, the episode id for any other episode. */
 export function scenarioName(episodeId: string | null | undefined): string {
   if (!episodeId) return 'not available'
   const i = SCENARIOS.findIndex((s) => s.episode_id === episodeId)
