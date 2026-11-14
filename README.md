@@ -4,6 +4,20 @@ Single-page UI for the Verum multi-agent industrial diagnostic pipeline, connect
 (backend repository, `docs/service_api.md`). The data is **synthetic** (a simulated gasoline terminal). Advisory
 only: a human decides, and no automatic action is authorised.
 
+## Quick start
+
+Requirements: Node.js 20 or newer with npm, and the Verum run service (backend repository) running on port 8765.
+
+```bash
+git clone https://github.com/Areen-Alsemari/Verum_Frontend.git
+cd Verum_Frontend
+npm install
+npm run dev
+```
+
+Open http://localhost:5173. The page needs the run service to be up (see below); without it the UI shows a
+"service not running" message with the start command.
+
 ## Run
 
 Start the service from the backend repository root, in a separate terminal:
