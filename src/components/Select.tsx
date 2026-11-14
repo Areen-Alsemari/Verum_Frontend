@@ -7,6 +7,8 @@ export interface SelectOption {
   description?: string
   /** small coloured tag, e.g. the scenario kind */
   badge?: { text: string; color: string }
+  /** shown but not selectable (use `description` to say why) */
+  disabled?: boolean
   /** options with the same group are listed under one heading */
   group?: string
 }
@@ -55,6 +57,7 @@ export function Select({ value, options, onChange, label, hideLabel = false, dis
   const openAt = (i: number) => { setActive(i); setOpen(true) }
   const choose = (i: number) => {
     const o = options[i]
+    if (o?.disabled) return
     if (o) onChange(o.value)
     setOpen(false)
   }
@@ -118,7 +121,8 @@ export function Select({ value, options, onChange, label, hideLabel = false, dis
                 id={`${base}-o-${i}`}
                 role="option"
                 aria-selected={o.value === value}
-                className={`vsel-opt${i === active ? ' is-active' : ''}${o.value === value ? ' is-selected' : ''}`}
+                aria-disabled={o.disabled || undefined}
+                className={`vsel-opt${i === active ? ' is-active' : ''}${o.value === value ? ' is-selected' : ''}${o.disabled ? ' is-disabled' : ''}`}
                 onMouseEnter={() => setActive(i)}
                 onMouseDown={(e) => { e.preventDefault(); choose(i) }}
               >

@@ -73,7 +73,7 @@ export function briefing(run: RunState): string[] {
   if (run.status === 'running') lines.push(`A ${mode} run on episode ${ep} is running; latest: ${w}.`)
   else if (run.status === 'stopped') lines.push(`Watching stopped at ${w} of a ${mode} run on episode ${ep}. The service may still be running it.`)
   else if (run.status === 'failed') lines.push(`The ${mode} run on episode ${ep} failed: ${run.error ?? 'no reason given'}`)
-  else lines.push(`The ${mode} run on episode ${ep} finished after ${run.done?.windows ?? 'an unknown number of'} windows.`)
+  else lines.push(`The ${mode} run on episode ${ep} finished after ${plural(run.done?.windows)}.`)
   const k = kpis(run)
   if (k.agentsComplete !== null) lines.push(`In the latest window ${k.agentsComplete} of ${k.agentsTotal} agents reported Complete.`)
   const failed = agents.filter((a) => isFailure(run.agents[a.role_key]?.state ?? 'idle'))
@@ -82,6 +82,11 @@ export function briefing(run: RunState): string[] {
   const ds = run.decision?.decision_state
   if (run.windowsSeen > 0) lines.push(`Decision state: ${ds ? label(ds) : 'not available'}. A human decides what happens next.`)
   return lines
+}
+
+/** "1 window", "12 windows", or "an unspecified number of windows". */
+export function plural(n: number | null | undefined): string {
+  return typeof n === 'number' ? `${n} window${n === 1 ? '' : 's'}` : 'an unspecified number of windows'
 }
 
 export const QUIET_WINDOW_NOTE = 'Quiet window: no alert was raised, so downstream agents have nothing to investigate.'

@@ -8,7 +8,7 @@ import { InspectionTab } from './tabs/InspectionTab'
 import { ReportTab } from './report/ReportTab'
 import { MessageLog } from './components/MessageLog'
 import { ModeBar } from './components/ModeBar'
-import { RunBar, SPEEDS } from './components/RunBar'
+import { OTHER, RunBar, SPEEDS } from './components/RunBar'
 import { ServiceMessage, type ServiceStatus } from './components/ServiceMessage'
 import { useRunController } from './state/useRunController'
 import { TabBar } from './shell/TabBar'
@@ -18,6 +18,8 @@ import { FacilityView } from './facility/FacilityView'
 import { agentList } from './state/runState'
 import { usePref } from './lib/env'
 import { describeError } from './lib/service'
+import { SCENARIOS } from './lib/scenarios'
+import { plural } from './lib/briefing'
 import { STATIC_FACILITY, serviceMismatch, unknownIds } from './facility'
 
 function TabPanel({ id, active, sub, children }: { id: TabId; active: TabId; sub?: string; children: React.ReactNode }) {
@@ -41,6 +43,7 @@ export default function App() {
   const [episodes, setEpisodes] = useState<Episode[] | null>(null)
   const [episodesError, setEpisodesError] = useState<string | null>(null)
   const [episodeId, setEpisodeId] = useState('')
+  const [scenarioId, setScenarioId] = useState(SCENARIOS[0]!.episode_id)
   const [speed, setSpeed] = useState(SPEEDS[0]!)
   const [revealTruth, setRevealTruth] = useState(false)
   const [serviceIds, setServiceIds] = useState<string[] | null>(null)
@@ -87,6 +90,8 @@ export default function App() {
     return () => { cancelled = true }
   }, [serviceUp, mode])
 
+  /** replay scenarios run their own episode; anything else uses the episode picker */
+  const runEpisode = mode === 'replay' && scenarioId !== OTHER ? scenarioId : episodeId
   const agents = agentList(run)
   const agentsByKey = Object.fromEntries(agents.map((a) => [a.role_key, a]))
   const running = run.status === 'running' || run.status === 'starting'
@@ -108,7 +113,7 @@ export default function App() {
       {run.status === 'stopped' && run.done === null && <p className="state-msg" role="status">Stopped watching before the run finished. Partial results are shown as they were.</p>}
       {run.connection === 'reconnecting' && running && <p className="state-msg" role="status">The event stream dropped. Reconnecting and resuming after event {run.lastSeq}…</p>}
       {run.status === 'finished' && run.done?.windows === 0 && <p className="state-msg" role="status">The run finished with no windows. The episode has nothing to play.</p>}
-      {run.status === 'finished' && <p className="state-msg" role="status">Run finished after {run.done?.windows ?? 'an unspecified number of'} windows.</p>}
+      {run.status === 'finished' && <p className="state-msg" role="status">Run finished after {plural(run.done?.windows)}.</p>}
     </>
   )
 
@@ -133,9 +138,9 @@ export default function App() {
       <main id="main" tabIndex={-1}>
         <TabPanel id="command" active={tab} sub="Simulated gasoline terminal. Synthetic data from the simulator, not plant data.">
           <ServiceMessage status={service} onRetry={checkService} />
-          <RunBar mode={mode} onMode={setMode} modes={modes} episodes={episodes} episodesError={episodesError} episodeId={episodeId} onEpisode={setEpisodeId}
+          <RunBar mode={mode} onMode={setMode} modes={modes} episodes={episodes} episodesError={episodesError} scenarioId={scenarioId} onScenario={setScenarioId} episodeId={episodeId} onEpisode={setEpisodeId}
             speed={speed} onSpeed={setSpeed} revealTruth={revealTruth} onRevealTruth={setRevealTruth} status={run.status} serviceUp={serviceUp}
-            onRun={() => void ctl.start({ mode, speed, ...(episodeId ? { episode_id: episodeId } : {}), reveal_truth: revealTruth })} onStop={ctl.stop} />
+            onRun={() => void ctl.start({ mode, speed, ...(runEpisode ? { episode_id: runEpisode } : {}), reveal_truth: revealTruth })} onStop={ctl.stop} />
           {messages}
           <CommandCenter run={run} selectedAgent={drawerRole} onSelectAgent={(r) => setDrawerRole((cur) => (cur === r ? null : r))} onGo={setTab} stage={facilityView} />
         </TabPanel>
