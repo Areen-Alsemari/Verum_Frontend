@@ -6,6 +6,12 @@ import { Select } from './Select'
 export const SPEEDS = [60, 300, 1000, 10000, 1000000]
 export const OTHER = 'other'
 
+/** Shown when GET /api/health reports a mode as off. */
+const OFF_REASON = {
+  replay: 'Replay is off: the service reports no replay directory (it was started without --replay-dir).',
+  live: 'Live is off: the service reports live mode is not enabled (it was started without --release).',
+}
+
 interface Props {
   mode: RunMode
   onMode: (m: RunMode) => void
@@ -34,8 +40,10 @@ export function RunBar(p: Props) {
   const replayOn = p.modes ? p.modes.replay : true
   const modeOptions = (['replay', 'live'] as const).map((m) => ({
     value: m, label: m === 'replay' ? 'Replay' : 'Live',
-    description: p.modes && !p.modes[m] ? 'Not enabled on this service' : m === 'replay' ? 'Plays stored windows of the sample' : 'Runs the agents on a validation episode',
+    disabled: p.modes ? !p.modes[m] : false,
+    description: p.modes && !p.modes[m] ? OFF_REASON[m] : m === 'replay' ? 'Plays stored windows of the sample' : 'Runs the agents on a validation episode',
   }))
+  const modeNote = p.modes && !p.modes.live ? OFF_REASON.live : p.modes && !p.modes.replay ? OFF_REASON.replay : null
   const scenarioOptions = [
     ...SCENARIOS.map((s) => {
       const a = availability(s, p.episodes, p.serviceUp, replayOn)
@@ -69,6 +77,7 @@ export function RunBar(p: Props) {
         <button type="button" className="btn btn-primary" disabled={!canRun} onClick={p.onRun}>Run</button>
         <button type="button" className="btn btn-danger" disabled={!running} onClick={p.onStop} title="Stops watching. The service has no stop route, so it may keep running the run.">Stop watching</button>
       </div>
+      {modeNote && <p className="control-help run-bar-note" role="status">{modeNote}</p>}
       {p.episodesError && <p className="control-help run-bar-note" role="status">{p.episodesError}</p>}
     </div>
   )

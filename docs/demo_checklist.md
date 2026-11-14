@@ -21,6 +21,8 @@ Backend, from the backend root, terminal 1:
 PYTHONPATH=src .venv/bin/python -m verum.service --port 8765 --replay-dir local/replay_sample --release data/reference_release_v2/verum_reference_v2
 ```
 
+Live mode needs the service started with `--release` (the command above has it) and the release folder; without it the page shows "Live is off" and disables the Live option. Replay alone needs only `--replay-dir`.
+
 It prints `verum service listening on http://127.0.0.1:8765`. Check: `curl localhost:8765/api/health` gives `"status": "ok"`.
 
 Frontend, from this repo, terminal 2:

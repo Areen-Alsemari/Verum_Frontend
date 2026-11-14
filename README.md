@@ -34,7 +34,7 @@ run's mode (replay or live) and the time-compression factor and note, as sent in
 
 | Tab | Content |
 |---|---|
-| Command center | Run bar (mode, episode, speed, reveal truth, Run, Stop watching); facility with sensor markers; briefing; KPI row; needs-attention list; agent workflow strip; decision panel |
+| Command center | Scenario switcher (four replay scenarios from `src/lib/scenarios.ts`, each a real run of its episode; an entry is disabled with its reason if the service does not list the episode) with mode, speed, reveal truth, Run, Stop watching; Live is disabled with a visible reason when the service reports live is off; facility with sensor markers; briefing; KPI row; needs-attention list; agent workflow strip; decision panel |
 | Agents | The agents' status in the latest window, exactly as received; detail drawer |
 | Message log | Every event received, in arrival order; filter by type, show the raw event, copy as JSON |
 | Investigation | Agent outcomes, persistence rule and alerts, report findings (unconfirmed), report ids, and, only for a run started with reveal truth, the simulation truth |

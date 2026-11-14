@@ -75,6 +75,11 @@ export default function App() {
     setEpisodes(null)
     setEpisodesError(null)
     setEpisodeId('')
+    if (modes && !modes[mode]) {
+      // the service says this mode is off: no request, no error text; the run bar says why
+      setEpisodes([])
+      return
+    }
     getEpisodes(mode).then(
       (r) => {
         if (cancelled) return
@@ -88,7 +93,7 @@ export default function App() {
       (e) => { if (!cancelled) { setEpisodes([]); setEpisodesError(`The episode list could not be loaded. ${describeError(e)}`) } },
     )
     return () => { cancelled = true }
-  }, [serviceUp, mode])
+  }, [serviceUp, mode, modes])
 
   /** replay scenarios run their own episode; anything else uses the episode picker */
   const runEpisode = mode === 'replay' && scenarioId !== OTHER ? scenarioId : episodeId
