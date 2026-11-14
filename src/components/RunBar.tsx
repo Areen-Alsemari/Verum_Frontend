@@ -47,7 +47,8 @@ export function RunBar(p: Props) {
   const scenarioOptions = [
     ...SCENARIOS.map((s) => {
       const a = availability(s, p.episodes, p.serviceUp, replayOn)
-      return { value: s.episode_id, label: s.title, description: a.available ? s.description : a.reason, disabled: !a.available }
+      const n = p.episodes?.find((e) => e.episode_id === s.episode_id)?.windows
+      return { value: s.episode_id, label: s.title, description: a.available ? `${s.description}${typeof n === 'number' ? ` The service lists ${n} window${n === 1 ? '' : 's'}.` : ''}` : a.reason, disabled: !a.available }
     }),
     { value: OTHER, label: 'Any other episode', description: 'Choose an episode from the service list' },
   ]

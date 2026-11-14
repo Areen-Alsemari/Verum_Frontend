@@ -10,7 +10,7 @@ const CONNECTION: Record<string, string> = {
 export function ModeBar({ run }: { run: RunState }) {
   const tc = run.timeCompression
   return (
-    <div className="mode-bar" role="region" aria-label="Run mode and time compression">
+    <div className="mode-bar" data-episode-id={run.run?.episode_id} role="region" aria-label="Run mode and time compression">
       <span className="mode-item"><span className="label">Mode</span>{run.mode ? <strong className={`mode-val mode-${run.mode}`}>{run.mode}</strong> : <Unknown what="mode" />}</span>
       <span className="mode-item"><span className="label">Time compression</span>{tc ? <strong>{formatFactor(tc.factor)}</strong> : <Unknown what="time compression" />}</span>
       <span className="mode-note">{tc?.note ? tc.note : <Unknown what="time compression note" />}</span>

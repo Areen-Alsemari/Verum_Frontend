@@ -1,5 +1,6 @@
 import { isFailure, statusText, type AgentUiState } from './agentState'
 import { label } from './labels'
+import { scenarioName } from './scenarios'
 import { agentList, type AgentInfo, type RunState } from '../state/runState'
 
 /** Facts for the KPI row. `null` means not available (nothing received yet). Counts are counts of service items only. */
@@ -69,11 +70,11 @@ export function briefing(run: RunState): string[] {
   const lines: string[] = []
   const w = run.windowIndex !== null ? `window ${run.windowIndex}` : 'no window yet'
   const mode = run.mode ?? 'not available'
-  const ep = run.run?.episode_id ?? 'not available'
-  if (run.status === 'running') lines.push(`A ${mode} run on episode ${ep} is running; latest: ${w}.`)
-  else if (run.status === 'stopped') lines.push(`Watching stopped at ${w} of a ${mode} run on episode ${ep}. The service may still be running it.`)
-  else if (run.status === 'failed') lines.push(`The ${mode} run on episode ${ep} failed: ${run.error ?? 'no reason given'}`)
-  else lines.push(`The ${mode} run on episode ${ep} finished after ${plural(run.done?.windows)}.`)
+  const ep = scenarioName(run.run?.episode_id)
+  if (run.status === 'running') lines.push(`A ${mode} run of ${ep} is running; latest: ${w}.`)
+  else if (run.status === 'stopped') lines.push(`Watching stopped at ${w} of a ${mode} run of ${ep}. The service may still be running it.`)
+  else if (run.status === 'failed') lines.push(`The ${mode} run of ${ep} failed: ${run.error ?? 'no reason given'}`)
+  else lines.push(`The ${mode} run of ${ep} finished after ${plural(run.done?.windows)}.`)
   const k = kpis(run)
   if (k.agentsComplete !== null) lines.push(`In the latest window ${k.agentsComplete} of ${k.agentsTotal} agents reported Complete.`)
   const failed = agents.filter((a) => isFailure(run.agents[a.role_key]?.state ?? 'idle'))
