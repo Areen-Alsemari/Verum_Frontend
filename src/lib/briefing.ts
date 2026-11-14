@@ -89,7 +89,7 @@ export function plural(n: number | null | undefined): string {
   return typeof n === 'number' ? `${n} window${n === 1 ? '' : 's'}` : 'an unspecified number of windows'
 }
 
-export const QUIET_WINDOW_NOTE = 'Quiet window: no alert was raised, so downstream agents have nothing to investigate.'
+export const QUIET_WINDOW_NOTE = 'Quiet window: no alert was raised in this window.'
 
 /**
  * True only when the service says so: the latest window result carries a settled persistence statement with
