@@ -28,8 +28,8 @@ describe('quiet window note', () => {
   it('does not change any agent status', () => {
     const run = feed(result(0, 3, pers(false)))
     render(<AgentBoard agents={agentList(run)} run={run} selected={null} onSelect={() => {}} />)
-    expect(screen.getByRole('button', { name: /Anomaly Detection: Complete/ })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /Diagnostic Reasoning: Degraded/ })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Anomaly Detection: Done$/ })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Diagnostic Reasoning: Done, limited data/ })).toBeInTheDocument()
     expect(run.agents.diagnostic_reasoning!.status).toBe('degraded')
   })
 

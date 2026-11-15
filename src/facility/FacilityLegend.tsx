@@ -14,7 +14,7 @@ export function FacilityLegend({ facility }: { facility: Facility }) {
         <li><span className="sw sw-sensor" aria-hidden="true" />Sensor (good)</li>
         <li><span className="sw sw-sensor-warn" aria-hidden="true" />Sensor suspect or stale</li>
         <li><span className="sw sw-sensor-unknown" aria-hidden="true" />Sensor value not available</li>
-        <li><span className="sw sw-flag" aria-hidden="true" />Flagged by agents</li>
+        <li><span className="sw sw-flag" aria-hidden="true" />Candidate asset, unconfirmed</li>
       </ul>
       <p className="legend-note">Simulated terminal. Schematic, not to scale. Flow left to right.</p>
     </aside>

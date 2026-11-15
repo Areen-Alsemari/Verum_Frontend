@@ -54,7 +54,7 @@ describe('Verum select', () => {
 
 describe('command center before a run', () => {
   it('does not show an empty operations briefing', () => {
-    render(<CommandCenter run={initialRunState()} selectedAgent={null} onSelectAgent={() => {}} onGo={() => {}} stage={null} />)
+    render(<CommandCenter run={initialRunState()} selectedAgent={null} onSelectAgent={() => {}} onGo={() => {}} stage={null} highlighted={null} />)
     expect(screen.queryByText('Operations briefing')).toBeNull()
   })
 })

@@ -11,24 +11,23 @@ interface Props {
   onRetry: () => void
 }
 
-/** CSS-only page footer for print: report id on the left, page numbers on the right. */
-function pageCss(reportId: string | null): string {
-  const id = (reportId ?? 'report id not available').replace(/["\\\n]/g, '')
-  return `@page { size: A4; margin: 16mm 14mm 18mm;
-  @bottom-left { content: "${id} · Advisory only. A human decides."; font: 8pt Inter, sans-serif; color: #5a544a; }
+/** CSS-only page footer for print: the one-line limitation on the left, page numbers on the right. */
+const PAGE_CSS = `@page { size: A4; margin: 16mm 14mm 18mm;
+  @bottom-left { content: "Advisory only: a person decides."; font: 8pt Inter, sans-serif; color: #5a544a; }
   @bottom-right { content: "Page " counter(page) " of " counter(pages); font: 8pt Inter, sans-serif; color: #5a544a; } }`
-}
 
 export function ReportTab({ run, onPickWindow, onRetry }: Props) {
   const rep = run.report
   const model = useMemo(() => (rep.state === 'ok' ? buildReportModel(run, rep.report, rep.window) : null), [run, rep])
   if (rep.state !== 'ok' || !model) return <>{reportNotice(rep, onRetry)}</>
+  const latest = rep.windowsAvailable.length ? Math.max(...rep.windowsAvailable) : rep.window
   const download = () => {
+    // the full service data, including the limitations and missing information left out of the printed report
     const data = { report: rep.report, window_index: rep.window, run_id: run.run?.run_id ?? null, mode: run.mode, time_compression: run.timeCompression, data: run.dataNote }
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
     const a = document.createElement('a')
     a.href = URL.createObjectURL(blob)
-    a.download = `${model.header.reportId ?? `report-${run.run?.run_id ?? 'run'}`}.json`
+    a.download = `${rep.report.report_id ?? `report-${run.run?.run_id ?? 'run'}`}.json`
     document.body.appendChild(a)
     a.click()
     a.remove()
@@ -36,14 +35,14 @@ export function ReportTab({ run, onPickWindow, onRetry }: Props) {
   }
   return (
     <div className="report-wrap">
-      <style>{pageCss(model.header.reportId)}</style>
-      <div className="report-actions glass" role="group" aria-label="Report actions">
-        {rep.windowsAvailable.length > 1 && (
-          <Select id="report-window" label="Window" value={String(rep.window)} options={rep.windowsAvailable.map((w) => ({ value: String(w), label: `Window ${w}` }))} onChange={(v) => onPickWindow(Number(v))} />
-        )}
-        <button type="button" className="btn btn-primary" onClick={() => window.print()}>Save as PDF</button>
-        <button type="button" className="btn" onClick={download}>Download report data (JSON)</button>
-        <span className="control-help">Default is the last window. Save as PDF opens the print dialog; choose "Save as PDF" as the destination.</span>
+      <style>{PAGE_CSS}</style>
+      <div className="report-actions" role="group" aria-label="Report actions">
+        <Select id="report-window" label="Window" variant="compact" value={String(rep.window)}
+          options={(rep.windowsAvailable.length ? rep.windowsAvailable : [rep.window]).map((w) => ({ value: String(w), label: `Window ${w}${w === latest ? ' (latest)' : ''}` }))}
+          onChange={(v) => onPickWindow(Number(v))} />
+        <span className="report-status" role="status">Report for window {rep.window}</span>
+        <button type="button" className="btn btn-primary" onClick={() => window.print()} title="Opens the print dialog. Choose Save as PDF as the destination.">Download PDF</button>
+        <button type="button" className="btn" onClick={download} title="The full data of the report as a file, including the technical notes.">Download data</button>
       </div>
       <ReportCard model={model} />
     </div>

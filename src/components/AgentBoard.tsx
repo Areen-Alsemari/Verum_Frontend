@@ -1,11 +1,8 @@
 import { useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { ARCHITECTURE, layersOf } from '../lib/architecture'
-import { STATE_COLOR, isFailure, statusText } from '../lib/agentState'
-import { label } from '../lib/labels'
-import type { AgentInfo, AgentRunState, RunState } from '../state/runState'
-import { AgentIcon } from './AgentIcon'
+import type { AgentInfo, RunState } from '../state/runState'
+import { AgentCard } from './AgentCard'
 import { QuietNote } from './QuietNote'
-import { Unknown } from './Unknown'
 
 interface Props {
   agents: AgentInfo[]
@@ -62,7 +59,6 @@ export function AgentBoard({ agents, run, selected, onSelect }: Props) {
     <section className="panel board" aria-labelledby="board-h">
       <div className="panel-head">
         <h2 id="board-h" className="label panel-title">Agent pipeline{run.windowIndex !== null && <span className="control-help"> · status from window {run.windowIndex}</span>}</h2>
-        <span className="pill" title="The arrows are the documented design, not data from this run">architecture</span>
       </div>
       <QuietNote run={run} />
       <div className="board-wrap" ref={wrapRef}>
@@ -80,7 +76,7 @@ export function AgentBoard({ agents, run, selected, onSelect }: Props) {
               <ol className="board-col-list">
                 {col.map((a) => (
                   <li key={a.role_key}>
-                    <AgentCard info={a} st={run.agents[a.role_key]} selected={selected === a.role_key}
+                    <AgentCard info={a} run={run} size="large" selected={selected === a.role_key}
                       refCb={(el) => { cardRefs.current[a.role_key] = el }} onClick={() => onSelect(a.role_key)} />
                   </li>
                 ))}
@@ -89,34 +85,6 @@ export function AgentBoard({ agents, run, selected, onSelect }: Props) {
           ))}
         </ol>
       </div>
-      <p className="control-help">Arrows show the documented chain (which agent reads which reports). They do not show what was exchanged in this run. Timing and per-agent report text are not available from the service.</p>
     </section>
-  )
-}
-
-function AgentCard({ info, st, selected, refCb, onClick }: { info: AgentInfo; st: AgentRunState | undefined; selected: boolean; refCb: (el: HTMLButtonElement | null) => void; onClick: () => void }) {
-  const state = st?.state ?? 'idle'
-  const text = statusText(state, st?.status)
-  const fail = isFailure(state)
-  return (
-    <button
-      type="button" ref={refCb} onClick={onClick}
-      className={`agent-card st-${state}${selected ? ' is-selected' : ''}`}
-      style={{ ['--st' as string]: STATE_COLOR[state] }}
-      aria-label={`${info.order}. ${info.name}: ${text}${st?.issueCodes[0] ? `, issue: ${label(st.issueCodes[0])}` : ''}. Open details.`}
-      aria-pressed={selected}
-    >
-      <span className="agent-head">
-        <span className="agent-ico"><AgentIcon role={info.role_key} /></span>
-        <span className="agent-name"><span className="agent-order">{info.order}</span> {info.name}</span>
-      </span>
-      <span className="agent-state"><span className="state-dot" aria-hidden="true" />{text}</span>
-      <dl className="agent-facts">
-        <div><dt>Issue codes</dt><dd>{st && st.state !== 'idle' ? st.issueCodes.length : '—'}</dd></div>
-        <div><dt>Report id</dt><dd>{st?.reportId ? <code title={st.reportId}>{st.reportId}</code> : st && st.state !== 'idle' ? <Unknown what="report id" /> : '—'}</dd></div>
-      </dl>
-      {st?.issueCodes[0] && <span className={`issue-code${fail ? ' is-fail' : ''}`} title={st.issueCodes[0]}>{label(st.issueCodes[0])}</span>}
-      {fail && <span className="agent-null">No report</span>}
-    </button>
   )
 }

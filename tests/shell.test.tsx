@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 import { TabBar } from '../src/shell/TabBar'
-import { TABS, parseHash } from '../src/shell/routes'
+import { TABS, parseHash, visibleTabs } from '../src/shell/routes'
 
 describe('hash routing', () => {
   it('parses known tabs and falls back to the command center', () => {
@@ -16,7 +16,7 @@ describe('tab bar', () => {
   it('is a tablist with one selected, focusable tab', () => {
     render(<TabBar active="agents" onSelect={() => {}} />)
     const tabs = screen.getAllByRole('tab')
-    expect(tabs).toHaveLength(TABS.length)
+    expect(tabs).toHaveLength(visibleTabs(false).length)
     expect(screen.getByRole('tab', { name: 'Agents' })).toHaveAttribute('aria-selected', 'true')
     expect(tabs.filter((t) => t.tabIndex === 0)).toHaveLength(1)
   })
@@ -30,5 +30,12 @@ describe('tab bar', () => {
     fireEvent.keyDown(first, { key: 'End' })
     fireEvent.keyDown(first, { key: 'Home' })
     expect(seen).toEqual(['agents', 'report', 'report', 'command'])
+  })
+
+  it('shows the message log in the tab bar, and About only from the footer', () => {
+    expect(visibleTabs(false).map((t) => t.id)).toEqual(['command', 'agents', 'log', 'investigation', 'inspection', 'report'])
+    expect(visibleTabs(true).map((t) => t.id)).toContain('log')
+    expect(visibleTabs(true).map((t) => t.id)).not.toContain('about')
+    expect(TABS.some((t) => t.id === 'about')).toBe(true)
   })
 })

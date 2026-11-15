@@ -7,13 +7,13 @@ import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { useCallback, useEffect, useMemo, useRef, useState, type MutableRefObject, type ReactNode } from 'react'
 import * as THREE from 'three'
 import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib'
-import { kindLabel, type Facility, type FacilityAsset } from '../facility'
+import { flagText, kindLabel, type Facility, type FacilityAsset, type FlagInfo } from '../facility'
 import { PIPE_Y, TANK_H, TANK_R, bounds, junctions, neighbours, nodePositions, pipeEnds, type Vec3 } from '../facility/geometry'
 import { readingDisplay, type SensorSample } from '../state/runState'
 import { COLORS, GenericBlock, Junction, PipeSegment, Pump, Tank, Transmitter, Valve, useMaterials, type Materials } from './parts'
 import { label } from '../lib/labels'
 
-export interface FlagInfo { by: string[]; severity?: string }
+export type { FlagInfo }
 
 export interface Facility3DProps {
   facility: Facility
@@ -26,6 +26,8 @@ export interface Facility3DProps {
   lowDetail: boolean
   reducedMotion: boolean
   variant?: 'overview' | 'focus'
+  /** keep the drawing buffer so the view can be taken as an image; also centres the view (no offset for the briefing card) */
+  preserve?: boolean
   /** set to a function that renders a frame and returns a PNG data URL (focus variant) */
   captureRef?: MutableRefObject<(() => string | null) | null>
   /** agent names for the "flagged by" tooltip */
@@ -256,8 +258,9 @@ function Scene(p: Facility3DProps & { ui: UiState }) {
   const focusAsset = p.focusId ? p.facility.assets.find((a) => a.asset_id === p.focusId) : undefined
   const focusCenter = focusAsset ? assetCenter(focusAsset, pos) : null
   // overview target sits slightly left of centre: the briefing card covers the left of the stage
-  const target: Vec3 = focusCenter ?? [b.center[0] - b.size * 0.07, 0, b.center[2]]
   const distance = focusAsset ? (focusAsset.kind === 'tank' ? 26 : variant === 'focus' ? 11 : 16) : b.size * 0.62
+  // in the overview variant the focused asset sits right of centre, clear of the briefing card on the left
+  const target: Vec3 = focusCenter ? (variant === 'overview' && !p.preserve ? [focusCenter[0] - distance * 0.2, focusCenter[1], focusCenter[2]] : focusCenter) : [b.center[0] - b.size * 0.07, 0, b.center[2]]
 
   useEffect(() => { document.body.style.cursor = hover || hoverTag ? 'pointer' : '' }, [hover, hoverTag])
   useEffect(() => () => { document.body.style.cursor = '' }, [])
@@ -384,12 +387,12 @@ export default function Facility3D(p: Facility3DProps) {
     if (!show) continue
     const c = assetCenter(a, pos)
     if (!c) continue
-    const sub = `${kindLabel(a.kind)}${fl ? ` · flagged by ${fl.by.length} agent${fl.by.length === 1 ? '' : 's'}` : ''}`
+    const sub = `${kindLabel(a.kind)}${fl ? ` · ${flagText(fl)}` : ''}`
     const lift = fl ? 1.1 + (flagIndex++ % 2) * 1.6 : 0.5
     specs.push({
       id: `a:${a.asset_id}`, pos: [c[0], heightOf(a.kind) + lift, c[2]],
       className: `scene-label${fl ? (fl.severity === 'critical' ? ' is-flag is-critical' : ' is-flag') : ''}`,
-      content: <>{a.label}<span>{sub}</span></>, text: [a.label, sub],
+      content: fl?.note ? <>{fl.note}</> : <>{a.label}<span>{sub}</span></>, text: fl?.note ? [fl.note] : [a.label, sub],
     })
   }
   for (const j of junctions(p.facility)) {
@@ -425,7 +428,7 @@ export default function Facility3D(p: Facility3DProps) {
         className="facility-canvas"
         shadows={!p.lowDetail}
         dpr={p.lowDetail ? 1 : [1, 1.75]}
-        gl={{ antialias: !p.lowDetail, preserveDrawingBuffer: variant === 'focus', powerPreference: 'high-performance' }}
+        gl={{ antialias: !p.lowDetail, preserveDrawingBuffer: variant === 'focus' || !!p.preserve, powerPreference: 'high-performance' }}
         camera={{ fov: 38, near: 0.5, far: 800, position: [b.center[0], b.size * 0.4, b.center[2] + b.size * 0.5] }}
         onPointerMissed={() => p.onSelect(null)}
         aria-label="3D view of the simulated terminal (schematic, not to scale)"

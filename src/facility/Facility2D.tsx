@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { kindLabel, type Facility } from './index'
+import { flagText, kindLabel, type Facility, type FlagInfo } from './index'
 import { bounds, junctions, nodePositions, pipeEnds, type Vec3 } from './geometry'
 
 interface Props {
   facility: Facility
-  flagged: Map<string, { by: string[]; severity?: string }>
+  flagged: Map<string, FlagInfo>
   selectedId: string | null
   onSelect: (id: string | null) => void
   /** draw only these asset ids (focus close-up); null = all */
@@ -129,10 +129,10 @@ export function Facility2D({ facility: f, flagged, selectedId, onSelect, only = 
           const mid = { x: (p1.x + p2.x) / 2, y: (p1.y + p2.y) / 2 }
           return (
             <g key={a.asset_id} className={`d2-pipe${fl ? ' is-flagged' : ''}${fl?.severity === 'critical' ? ' is-critical' : ''}${selectedId === a.asset_id ? ' is-selected' : ''}`}
-              {...act(a.asset_id, `Pipe segment ${a.asset_id}${fl ? `, flagged by ${fl.by.length} agents` : ''}`)}>
+              {...act(a.asset_id, `Pipe segment ${a.asset_id}${fl ? `, ${flagText(fl)}` : ''}`)}>
               <line x1={p1.x} y1={p1.y} x2={p2.x} y2={p2.y} />
               <line x1={p1.x} y1={p1.y} x2={mid.x} y2={mid.y} className="d2-flow" markerEnd="url(#flow-arrow)" />
-              <title>{a.asset_id} · pipe segment{fl ? ` · flagged by ${fl.by.length} agents` : ''}</title>
+              <title>{a.asset_id} · pipe segment{fl ? ` · ${flagText(fl)}` : ''}</title>
             </g>
           )
         })}
@@ -148,14 +148,14 @@ export function Facility2D({ facility: f, flagged, selectedId, onSelect, only = 
           return (
             <g key={a.asset_id} transform={`translate(${p[0]} ${p[2] * ZS})`}
               className={`d2-asset k-${a.kind}${fl ? ' is-flagged' : ''}${fl?.severity === 'critical' ? ' is-critical' : ''}${selectedId === a.asset_id ? ' is-selected' : ''}`}
-              {...act(a.asset_id, `${kindLabel(a.kind)} ${a.asset_id}${fl ? `, flagged by ${fl.by.length} agents` : ''}`)}>
+              {...act(a.asset_id, `${kindLabel(a.kind)} ${a.asset_id}${fl ? `, ${flagText(fl)}` : ''}`)}>
               {fl && <circle r={r + 1.4} className="d2-ring" />}
               {a.kind === 'isolation_valve' ? <path d={`M${-r} ${-r * 0.7}L${r} ${r * 0.7}V${-r * 0.7}L${-r} ${r * 0.7}Z`} />
                 : a.kind === 'pressure_transmitter' ? <rect x={-r} y={-r} width={r * 2} height={r * 2} rx={0.2} />
                 : a.kind === 'tank' || a.kind === 'pump' ? <circle r={r} />
                 : <rect x={-r} y={-r} width={r * 2} height={r * 2} />}
               {main && <text y={a.kind === 'tank' ? 0.6 : a.kind === 'pressure_transmitter' ? r + 1.9 : -r - 0.8} textAnchor="middle" className="d2-label">{a.asset_id}</text>}
-              <title>{a.asset_id} · {kindLabel(a.kind)}{fl ? ` · flagged by ${fl.by.length} agents` : ''}</title>
+              <title>{a.asset_id} · {kindLabel(a.kind)}{fl ? ` · ${flagText(fl)}` : ''}</title>
             </g>
           )
         })}

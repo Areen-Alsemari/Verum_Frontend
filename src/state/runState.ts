@@ -88,6 +88,8 @@ export interface RunState {
   malformed: number
   report: ReportState
   truth: TruthState
+  /** set when the view is held at an earlier window: its position among the windows received */
+  viewing: { index: number; total: number } | null
 }
 
 export type RunAction =
@@ -106,7 +108,7 @@ export function initialRunState(): RunState {
     status: 'idle', connection: 'none', run: null, mode: null, timeCompression: null, dataNote: null, lastSeq: -1,
     events: [], sensors: {}, windowIndex: null, resultWindowIndex: null, asOfS: null, agentOrder: [], agents: {},
     decision: undefined, persistence: undefined, runnerNotes: [], alerts: [], windowsSeen: 0,
-    done: null, error: null, malformed: 0, report: { state: 'idle' }, truth: { state: 'off' },
+    done: null, error: null, malformed: 0, report: { state: 'idle' }, truth: { state: 'off' }, viewing: null,
   }
 }
 

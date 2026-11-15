@@ -7,7 +7,13 @@ export const TABS = [
   { id: 'investigation', label: 'Investigation' },
   { id: 'inspection', label: 'Inspection plan' },
   { id: 'report', label: 'Report' },
+  { id: 'about', label: 'About', hidden: true },
 ] as const
+
+/** Tabs shown in the tab bar. About is reached from the footer only. */
+export function visibleTabs(dev: boolean) {
+  return TABS.filter((t) => !('hidden' in t && t.hidden) && (dev || !('dev' in t && (t as { dev?: boolean }).dev)))
+}
 
 export type TabId = (typeof TABS)[number]['id']
 export const DEFAULT_TAB: TabId = 'command'

@@ -1,25 +1,42 @@
-import { isFailure, statusText, type AgentUiState } from './agentState'
+import { isFailure, statusText } from './agentState'
 import { label } from './labels'
 import { scenarioName } from './scenarios'
 import { agentList, type AgentInfo, type RunState } from '../state/runState'
+import { persistenceSentence } from './plain'
 
-/** Facts for the KPI row. `null` means not available (nothing received yet). Counts are counts of service items only. */
+/** Figures an operator uses, taken from the run data only. `null` means nothing yet. */
 export interface Kpis {
-  agentsComplete: number | null
-  agentsTotal: number
-  issueCodes: number | null
+  windowsAnalysed: number | null
   alerts: number | null
+  /** equipment named by the report as a candidate (0 or 1); null until a report exists for the window on show */
+  equipmentFlagged: number | null
+  agentsResponded: number | null
+  agentsTotal: number
+  /** per-agent detail for tooltips and the developer view */
+  agentsComplete: number | null
+  agentsLimited: number | null
+  agentsInsufficient: number | null
+  agentsFailed: number | null
+  issueCodes: number | null
+  runnerNotes: string[]
   decisionState: string | null
 }
 
-export function kpis(run: RunState): Kpis {
+export function kpis(run: RunState, flagged: number | null = null): Kpis {
   const list = Object.values(run.agents)
   const have = run.windowsSeen > 0
   return {
-    agentsComplete: have ? list.filter((a) => a.state === 'complete').length : null,
-    agentsTotal: list.length,
-    issueCodes: have ? list.reduce((n, a) => n + a.issueCodes.length, 0) : null,
+    windowsAnalysed: have ? run.windowsSeen : null,
     alerts: run.status === 'idle' || run.status === 'starting' ? null : run.alerts.length,
+    equipmentFlagged: flagged,
+    agentsResponded: have ? list.filter((a) => !isFailure(a.state)).length : null,
+    agentsTotal: list.length,
+    agentsComplete: have ? list.filter((a) => a.state === 'complete').length : null,
+    agentsLimited: have ? list.filter((a) => a.state === 'degraded').length : null,
+    agentsInsufficient: have ? list.filter((a) => a.state === 'insufficient_evidence').length : null,
+    agentsFailed: have ? list.filter((a) => isFailure(a.state)).length : null,
+    issueCodes: have ? list.reduce((n, a) => n + a.issueCodes.length, 0) : null,
+    runnerNotes: run.runnerNotes,
     decisionState: run.decision?.decision_state ?? null,
   }
 }
@@ -34,27 +51,28 @@ export interface AttentionItem {
   tab: 'agents' | 'investigation' | 'inspection' | 'log'
 }
 
-/** "Needs attention" items, all taken from the latest window and the alerts. Failures first. */
-export function attentionItems(run: RunState, agents: AgentInfo[]): AttentionItem[] {
+/**
+ * "Needs attention" items from the latest window. Alerts, the suspected equipment, agents that gave no result and the
+ * open decision are always listed; agents that only had limited data are listed in the developer view.
+ */
+export function attentionItems(run: RunState, agents: AgentInfo[], opts: { dev?: boolean; suspected?: string | null } = {}): AttentionItem[] {
   const out: AttentionItem[] = []
-  const rank = (s: AgentUiState) => (isFailure(s) ? 0 : s === 'degraded' ? 1 : 2)
   const rows = agents
     .map((a) => ({ a, st: run.agents[a.role_key] }))
-    .filter((x) => x.st && x.st.state !== 'idle' && x.st.state !== 'complete')
-    .sort((x, y) => rank(x.st!.state) - rank(y.st!.state))
+    .filter((x) => x.st && (isFailure(x.st.state) || (opts.dev && x.st.state !== 'idle' && x.st.state !== 'complete')))
   for (const { a, st } of rows) {
     const s = st!
     out.push({
       key: `ag-${a.role_key}`,
-      tone: isFailure(s.state) ? 'fail' : s.state === 'degraded' ? 'warn' : 'info',
-      title: `${a.order}. ${a.name}: ${statusText(s.state, s.status)}`,
-      code: s.issueCodes[0],
-      detail: isFailure(s.state) ? 'No report from this agent.' : undefined,
+      tone: isFailure(s.state) ? 'fail' : 'warn',
+      title: isFailure(s.state) ? `${a.name} gave no result` : `${a.name}: ${statusText(s.state, s.status)}`,
+      code: opts.dev ? s.issueCodes[0] : undefined,
       tab: 'agents',
     })
   }
+  if (opts.suspected) out.push({ key: 'suspected', tone: 'accent', title: `Suspected: ${opts.suspected}`, detail: 'Unconfirmed. Check on site.', tab: 'investigation' })
   for (const al of run.alerts) {
-    out.push({ key: `al-${al.seq}`, tone: 'accent', title: `Alert in window ${al.window_index}`, detail: al.message, tab: 'log' })
+    out.push({ key: `al-${al.seq}`, tone: 'accent', title: `Alert in window ${al.window_index}`, detail: al.message, tab: 'investigation' })
   }
   if (run.decision?.human_decision_required === true) {
     out.push({ key: 'decision', tone: 'accent', title: 'Awaiting human decision', detail: 'A person must review and decide; nothing happens automatically.', tab: 'inspection' })
@@ -71,17 +89,18 @@ export function briefing(run: RunState): string[] {
   const w = run.windowIndex !== null ? `window ${run.windowIndex}` : 'no window yet'
   const mode = run.mode ?? 'not available'
   const ep = scenarioName(run.run?.episode_id)
-  if (run.status === 'running') lines.push(`A ${mode} run of ${ep} is running; latest: ${w}.`)
+  if (run.viewing) lines.push(`Viewing window ${run.viewing.index} of ${run.viewing.total} of the ${mode} run of ${ep}.`)
+  else if (run.status === 'running') lines.push(`A ${mode} run of ${ep} is running; latest: ${w}.`)
   else if (run.status === 'stopped') lines.push(`Watching stopped at ${w} of a ${mode} run of ${ep}. The service may still be running it.`)
   else if (run.status === 'failed') lines.push(`The ${mode} run of ${ep} failed: ${run.error ?? 'no reason given'}`)
   else lines.push(`The ${mode} run of ${ep} finished after ${plural(run.done?.windows)}.`)
-  const k = kpis(run)
-  if (k.agentsComplete !== null) lines.push(`In the latest window ${k.agentsComplete} of ${k.agentsTotal} agents reported Complete.`)
   const failed = agents.filter((a) => isFailure(run.agents[a.role_key]?.state ?? 'idle'))
   if (failed.length) lines.push(`No status or an error from ${failed.map((a) => a.name).join(', ')}.`)
+  const rule = persistenceSentence(run.persistence)
   if (run.alerts.length) lines.push(`${run.alerts.length} alert${run.alerts.length === 1 ? '' : 's'} so far; the latest says: ${run.alerts[run.alerts.length - 1]!.message}.`)
+  else if (rule) lines.push(rule)
   const ds = run.decision?.decision_state
-  if (run.windowsSeen > 0) lines.push(`Decision state: ${ds ? label(ds) : 'not available'}. A human decides what happens next.`)
+  if (run.windowsSeen > 0) lines.push(`Decision state: ${ds ? label(ds) : 'not available'}. A person decides what happens next.`)
   return lines
 }
 
@@ -101,4 +120,12 @@ export function isQuietWindow(run: RunState): boolean {
   if (run.persistence?.alarming !== false) return false
   if (run.resultWindowIndex === null) return false
   return !run.alerts.some((a) => a.window_index === run.resultWindowIndex)
+}
+
+/** "3 complete · 5 with limited inputs", plus failures and insufficient evidence only when there are some. */
+export function agentBreakdown(k: Pick<Kpis, 'agentsComplete' | 'agentsLimited' | 'agentsInsufficient' | 'agentsFailed'>, sep = ', '): string {
+  const parts = [`${k.agentsComplete ?? 0} complete`, `${k.agentsLimited ?? 0} with limited inputs`]
+  if (k.agentsInsufficient) parts.push(`${k.agentsInsufficient} with insufficient evidence`)
+  if (k.agentsFailed) parts.push(`${k.agentsFailed} failed or gave no status`)
+  return parts.join(sep)
 }

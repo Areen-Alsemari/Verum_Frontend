@@ -63,4 +63,4 @@ see, and the service answers 400 or 404 for runs without it; the page then shows
 ## 6. Things to say out loud
 
 Synthetic data, not plant data. Mode (replay or live) and the time-compression note are on every screen. The
-facility layout is a static snapshot; the service sends no coordinates and flags no assets. Advisory only: a human decides.
+facility layout is a static snapshot; the service sends no coordinates and flags no assets; the highlighted asset is only Agent 5's unconfirmed candidate. Advisory only: a human decides.

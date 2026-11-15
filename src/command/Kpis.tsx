@@ -1,10 +1,10 @@
 import type { Kpis } from '../lib/briefing'
-import { Unknown } from '../components/Unknown'
-import { label } from '../lib/labels'
+import { agentBreakdown } from '../lib/briefing'
+import { noteText } from '../lib/plain'
 
-function Card({ label, value, sub, tone }: { label: string; value: React.ReactNode; sub?: React.ReactNode; tone?: string }) {
+function Card({ label, value, sub, tone, title }: { label: string; value: React.ReactNode; sub?: React.ReactNode; tone?: string; title?: string }) {
   return (
-    <div className={`kpi glass${tone ? ` tone-${tone}` : ''}`}>
+    <div className={`kpi glass${tone ? ` tone-${tone}` : ''}`} title={title}>
       <span className="label">{label}</span>
       <strong className="kpi-value">{value}</strong>
       {sub && <span className="kpi-sub">{sub}</span>}
@@ -12,17 +12,21 @@ function Card({ label, value, sub, tone }: { label: string; value: React.ReactNo
   )
 }
 
-export function KpiRow({ k }: { k: Kpis }) {
+const dash = <span className="kpi-none" aria-label="nothing yet">–</span>
+
+/** What an operator uses: windows analysed, alerts raised, equipment flagged, and how many agents responded. */
+export function KpiRow({ k, dev = false }: { k: Kpis; dev?: boolean }) {
+  const detail = k.agentsResponded === null ? undefined : agentBreakdown(k, ', ')
   return (
-    <div className="kpi-row" role="group" aria-label="Key figures from the run data">
-      <Card label="Agents complete" value={k.agentsComplete === null ? <Unknown what="agents complete" /> : <>{k.agentsComplete}<small> / {k.agentsTotal}</small></>}
-        sub="agents with status Complete in the latest window" />
-      <Card label="Issue codes" tone={k.issueCodes ? 'warn' : undefined} value={k.issueCodes === null ? <Unknown what="issue codes" /> : k.issueCodes}
-        sub="runner issue codes in the latest window" />
-      <Card label="Alerts" tone={k.alerts ? 'accent' : undefined} value={k.alerts === null ? <Unknown what="alerts" /> : k.alerts}
-        sub="persistence rule alerts so far" />
-      <Card label="Decision state" value={k.decisionState === null ? <Unknown what="decision state" /> : <span className="kpi-text" title={k.decisionState}>{label(k.decisionState)}</span>}
-        sub="Agent 8, latest window" />
+    <div className="kpi-row" role="group" aria-label="Key figures">
+      <Card label="Windows analysed" value={k.windowsAnalysed ?? dash} sub="windows of the run so far" />
+      <Card label="Alerts raised" tone={k.alerts ? 'accent' : undefined} value={k.alerts ?? dash} sub="when the readings stay above normal" />
+      <Card label="Equipment flagged" tone={k.equipmentFlagged ? 'accent' : undefined} value={k.equipmentFlagged ?? dash} sub="suspected, unconfirmed" />
+      <Card label="Agents responded" title={detail} value={k.agentsResponded === null ? dash : <>{k.agentsResponded}<small> of {k.agentsTotal}</small></>} sub="hover for the detail" />
+      {dev && (
+        <Card label="Developer detail" value={k.issueCodes ?? dash}
+          sub={<>runner issue codes in the latest window{k.runnerNotes.length > 0 && <ul className="plain">{k.runnerNotes.map((c) => <li key={c}>{c} · {noteText(c)}</li>)}</ul>}</>} />
+      )}
     </div>
   )
 }

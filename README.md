@@ -41,19 +41,36 @@ npm run typecheck    # tsc, strict
 `VITE_API_URL` sets the service URL (default `http://localhost:8765`). All access to the service is in
 `src/api/client.ts`.
 
-## Tabs
+## Screens
 
-Hash routing (`#/command`, `#/agents`, `#/log`, `#/investigation`, `#/inspection`, `#/report`). Every screen shows the
-run's mode (replay or live) and the time-compression factor and note, as sent in the events.
+Hash routing (`#/command`, `#/agents`, `#/investigation`, `#/inspection`, `#/report`, `#/about`). The screens show what
+an engineer or operator needs: what is happening, which equipment is affected and what to check. Technical content
+(mode, time compression, runner notes, issue codes, report ids) is in the **Developer view**, which is
+off by default: use the small link in the footer, or open the page with `?dev=1`.
 
-| Tab | Content |
+| Screen | Content |
 |---|---|
-| Command center | Scenario switcher (four replay scenarios from `src/lib/scenarios.ts`, each a real run of its episode; an entry is disabled with its reason if the service does not list the episode) with mode, speed, reveal truth, Run, Stop watching; Live is disabled with a visible reason when the service reports live is off; facility with sensor markers; briefing; KPI row; needs-attention list; agent workflow strip; decision panel |
-| Agents | The agents' status in the latest window, exactly as received; detail drawer |
-| Message log | Every event received, in arrival order; filter by type, show the raw event, copy as JSON |
-| Investigation | Agent outcomes, persistence rule and alerts, report findings (unconfirmed), report ids, and, only for a run started with reveal truth, the simulation truth |
-| Inspection plan | Inspection options from the report (advisory) and Agent 8's decision with its fixed flags |
-| Report | Maintenance report of the last window (or another window), Save as PDF, download JSON |
+| Command center | The **control panel**, the 3D facility, the briefing, four metrics (windows analysed, alerts raised, equipment flagged, agents responded), the needs-attention list, the eight agent cards and the human decision |
+| Agents | The eight agents as cards with their characters, a state (working, done, done with limited data, needs more data) and, when the report holds something attributable to the agent, one sentence on what it contributed |
+| Investigation | What was found (candidate causes, unconfirmed), alerts and trend in plain sentences, and the simulated truth when it was asked for |
+| Inspection plan | What to check, as a checklist, and the decision state |
+| Report | A one-page report: what was found, a picture of the facility with the suspected equipment, what changed, what to check, a sign-off box. Download PDF (print dialog) and Download data (the full data, including the technical notes) |
+| About | What the demo is, and the technical notes of the report (collapsed) |
+| Message log | Every event received, filter by type, raw event, copy as JSON |
+
+### Control panel
+
+The control panel controls only real runs of stored episodes; it never injects or changes a fault. Groups:
+
+- **Scenario**: the four scenarios (`src/lib/scenarios.ts`) and a stored-episode picker (the test split is never listed).
+- **Run settings**: mode (replay or live; live is disabled with a reason when the service reports it is off), playback speed, reveal the simulated truth.
+- **Playback**: Run, Pause, Resume, Restart, Previous window, Next window, a window scrubber, and Back to live. A run plays all its windows by itself at the chosen speed and the view follows the newest window; pausing, stepping or scrubbing holds an earlier window ("Viewing window N of M") until Back to live.
+- **Reset to defaults**.
+
+### Agent characters
+
+`Eight Industrial Agent Icons Grid.png` holds the eight characters. `npm run agents` cuts them into
+`src/assets/agents/agent-1.png` to `agent-8.png` (left to right, top to bottom is agent 1 to 8). A card without an image shows the line icon.
 
 There is no approve, execute or dispatch control anywhere.
 
@@ -83,7 +100,7 @@ used to check ids: assets or tags that differ show a **Facility mismatch** badge
   under React 19 logged "synchronously unmount a root" errors.
 - Sensor markers: hover or click for tag id, value, unit, quality and asset. Missing values show "not available";
   stale or suspect values show the quality label, never a normal value or 0.
-- The service lists no flagged assets, so no asset is highlighted.
+- The service flags no assets. The only highlight is the candidate asset: Agent 5's top hypothesis in the report, shown as "candidate, unconfirmed" with its uncalibrated score. A hypothesis with no asset highlights nothing. The simulation truth is never used for it and is shown in a separate panel.
 - Search by asset or tag id (focuses the camera), legend, list of all assets and sensors by kind.
 - "2D view" draws the same graph as an accessible SVG (keyboard focusable), centred, with wheel or +/− zoom,
   drag to pan and Reset; used automatically without WebGL.

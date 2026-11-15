@@ -11,7 +11,8 @@
     "lint": "eslint .",
     "test": "vitest run",
     "assets": "python3 -I scripts/process_brand_assets.py",
-    "facility": "python3 -I scripts/extract-facility.py --verum"
+    "facility": "python3 -I scripts/extract-facility.py --verum",
+    "agents": "python3 -I scripts/cut_agents.py"
   },
   "dependencies": {
     "@fontsource/inter": "^5.3.0",

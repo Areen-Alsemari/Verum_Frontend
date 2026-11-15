@@ -5,7 +5,7 @@ import { hasWebGL, usePrefersReducedMotion } from '../lib/env'
 import { Facility2D } from './Facility2D'
 import { FacilityLegend } from './FacilityLegend'
 import { AssetListPanel, FacilitySearch } from './FacilityPanels'
-import type { Facility } from './index'
+import type { Facility, FlagInfo } from './index'
 
 
 export class Boundary extends Component<{ fallback: ReactNode; children: ReactNode }, { failed: boolean }> {
@@ -16,7 +16,7 @@ export class Boundary extends Component<{ fallback: ReactNode; children: ReactNo
 
 export interface FacilityViewProps {
   facility: Facility
-  flagged: Map<string, { by: string[]; severity?: string }>
+  flagged: Map<string, FlagInfo>
   readings: Record<string, SensorSample>
   selectedId: string | null
   onSelect: (id: string | null) => void
@@ -26,6 +26,8 @@ export interface FacilityViewProps {
   lowDetail: boolean
   onLowDetail: (v: boolean) => void
   agentName?: (role: string) => string
+  /** returns the camera to the overview and drops any zoom */
+  onResetView?: () => void
 }
 
 /** 3D facility (lazy) with search, legend, asset list, 2D toggle and low-detail switch. Falls back to 2D without WebGL. */
@@ -55,6 +57,7 @@ export function FacilityView(p: FacilityViewProps) {
         <label className="tool-toggle">
           <input type="checkbox" checked={p.lowDetail} disabled={use2D} onChange={(e) => p.onLowDetail(e.target.checked)} /> Low detail
         </label>
+        <button type="button" className="btn btn-ghost tool-btn" onClick={p.onResetView} disabled={!p.onResetView || !p.focusId}>Reset view</button>
         <button type="button" className="btn btn-ghost tool-btn" aria-expanded={listOpen} aria-controls="asset-list" onClick={() => setListOpen((o) => !o)}>
           Assets and sensors
         </button>

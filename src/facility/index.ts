@@ -121,3 +121,10 @@ export function serviceMismatch(api: { assets: { asset_id: string }[]; tags: { t
   const b = new Set([...snapshot.assets.map((x) => x.asset_id), ...snapshot.sensors.map((x) => x.tag_id)])
   return [...[...a].filter((x) => !b.has(x)), ...[...b].filter((x) => !a.has(x))]
 }
+
+/** An asset to highlight. `note`, when given, replaces the "flagged by N agents" text (used for the unconfirmed candidate). */
+export interface FlagInfo { by: string[]; severity?: string; note?: string }
+
+export function flagText(fl: FlagInfo): string {
+  return fl.note ?? `flagged by ${fl.by.length} agent${fl.by.length === 1 ? '' : 's'}`
+}

@@ -1,7 +1,7 @@
 import { useId, useMemo, useState } from 'react'
 import { readingDisplay, type SensorSample } from '../state/runState'
 import { Unknown } from '../components/Unknown'
-import { kindLabel, kindRank, type Facility } from './index'
+import { flagText, kindLabel, kindRank, type Facility, type FlagInfo } from './index'
 
 interface Hit { id: string; kind: 'asset' | 'tag'; assetId: string | null; text: string }
 
@@ -59,7 +59,7 @@ export function FacilitySearch({ facility, onPick }: { facility: Facility; onPic
 interface ListProps {
   id: string
   facility: Facility
-  flagged: Map<string, { by: string[] }>
+  flagged: Map<string, FlagInfo>
   readings: Record<string, SensorSample>
   selectedId: string | null
   onPick: (id: string) => void
@@ -91,7 +91,7 @@ export function AssetListPanel({ id, facility: f, flagged, readings, selectedId,
                   <li key={aid}>
                     <button type="button" className={`asset-row${selectedId === aid ? ' is-selected' : ''}${flagged.has(aid) ? ' is-flagged' : ''}`} onClick={() => onPick(aid)}>
                       <code>{aid}</code>
-                      {flagged.has(aid) && <span className="pill pill-flag">flagged by {flagged.get(aid)!.by.length}</span>}
+                      {flagged.has(aid) && <span className="pill pill-flag">{flagText(flagged.get(aid)!)}</span>}
                     </button>
                     {tags.length > 0 && (
                       <ul className="tag-rows">

@@ -10,7 +10,7 @@ export function NeedsAttention({ items, onGo, idle }: { items: AttentionItem[]; 
         {items.length > 0 && <span className="pill">{items.length}</span>}
       </div>
       {items.length === 0 ? (
-        <p className="control-help">{idle ? 'Nothing yet: no run has produced data.' : 'Nothing listed by the run data so far.'}</p>
+        <p className="control-help">{idle ? 'Nothing yet. Start a run.' : 'Nothing needs attention so far.'}</p>
       ) : (
         <ul className="attn-list">
           {items.map((it) => (

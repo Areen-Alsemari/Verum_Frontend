@@ -1,31 +1,35 @@
 import { useRef, type KeyboardEvent } from 'react'
-import { TABS, type TabId } from './routes'
+import { visibleTabs, type TabId } from './routes'
+
+type Tab = { id: TabId; label: string }
 
 interface Props {
   active: TabId
   onSelect: (t: TabId) => void
+  /** the tabs to show (default: all) */
+  tabs?: readonly Tab[]
   /** small count badges per tab, only when there is something to show */
   badges?: Partial<Record<TabId, { text: string; tone?: 'fail' | 'warn' | 'info' }>>
 }
 
 /** Pill-shaped tab bar. Arrow keys, Home and End move between tabs (roving tabindex). */
-export function TabBar({ active, onSelect, badges = {} }: Props) {
+export function TabBar({ active, onSelect, badges = {}, tabs = visibleTabs(false) }: Props) {
   const refs = useRef<(HTMLButtonElement | null)[]>([])
   const onKey = (e: KeyboardEvent<HTMLButtonElement>, i: number) => {
     let n = -1
-    if (e.key === 'ArrowRight') n = (i + 1) % TABS.length
-    else if (e.key === 'ArrowLeft') n = (i - 1 + TABS.length) % TABS.length
+    if (e.key === 'ArrowRight') n = (i + 1) % tabs.length
+    else if (e.key === 'ArrowLeft') n = (i - 1 + tabs.length) % tabs.length
     else if (e.key === 'Home') n = 0
-    else if (e.key === 'End') n = TABS.length - 1
+    else if (e.key === 'End') n = tabs.length - 1
     if (n < 0) return
     e.preventDefault()
-    onSelect(TABS[n]!.id)
+    onSelect(tabs[n]!.id)
     refs.current[n]?.focus()
   }
   return (
     <nav className="tabbar glass" aria-label="Sections">
       <div role="tablist" aria-label="Sections" className="tabbar-list">
-        {TABS.map((t, i) => {
+        {tabs.map((t, i) => {
           const on = t.id === active
           const b = badges[t.id]
           return (

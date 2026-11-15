@@ -43,6 +43,7 @@ stopping the stream.
   no coordinates. Ids are checked against `GET /api/facility`; a difference raises the Facility mismatch badge.
   The page says the layout is a static snapshot.
 - `src/lib/labels.ts`: readable wording for codes and role keys (display text, not data).
+- `screenshots/`: images and PDFs made earlier from the removed mock UI. They are stale and no longer reflect the app.
 
 No mock client, mock data or silent fallback remains. The old `VITE_API_MODE`, `VITE_API_BASE` and the Vite `/api`
 proxy are gone.
@@ -96,3 +97,6 @@ directory state (the sample directory is not empty), and the 3D view on a machin
   flags exist in `tools/agents/run_runner_sample.py`, but the backend docs do not print it.
 - **Secrets:** no `.env`, key or credential file is tracked or staged, and none exists in the working tree. `.env`
   was not in `.gitignore`; `.env`, `.env.*` (except `.env.example`) are now ignored. `git status` is clean.
+- **Commits:** all 34 commits on `frontend-redesign` (since `main`) are authored by Areen Alsemari
+  (`areenalsemari@gmail.com`). None has a trailer (Co-Authored-By or Signed-off-by) or a mention of Claude, Anthropic
+  or AI in its message, and a search of the tracked files for those words found nothing.
